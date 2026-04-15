@@ -17,12 +17,14 @@ CDA replaces TurboQuant's random orthogonal rotation with a Sylvester Hadamard m
 
 This repository ships as a **binary artifact**. Pre-compiled extensions for the tested reference platform are included so reviewers can reproduce all paper numbers without access to the private sources.
 
-| Component                                  | Format              | Shipped here? |
-|--------------------------------------------|---------------------|:-------------:|
-| Public high-level wrappers & API stubs     | `.py` source        | ✅            |
-| Quantizer / reference attention / cache    | Cython `.so`         | ✅            |
-| Fused CUDA kernels (score + V output)      | CUDA `.so`           | ✅            |
-| CUDA sources, Cython `.pyx`, maintainer tooling | —              | ❌ (private)  |
+| Component                                       | Format              | Shipped here? |
+|--------------------------------------------------|---------------------|:-------------:|
+| Public high-level wrappers & API stubs           | `.py` source        | ✅            |
+| Quantizer / reference attention / cache          | Cython `.so`         | ✅            |
+| Fused CUDA kernels (per-head, score + V output)  | CUDA `.so`           | ✅            |
+| GQA-aware fused CUDA kernels (Fig 5(c))          | CUDA `.so`           | ✅            |
+| GQA CUDA source (for on-platform rebuild)        | `csrc/*.cu` + `setup_gqa.py` | ✅    |
+| Private Cython `.pyx`, main kernel `.cu`, maintainer tooling | —       | ❌ (private)  |
 
 **Tested platform.** Python 3.10, PyTorch 2.5 + CUDA 12.1, NVIDIA RTX A6000 (sm_86), Linux x86_64. The bundled binaries are ABI-compatible with this stack only.
 
@@ -42,15 +44,23 @@ cda_submission/
 ├── cda/                          # Importable Python package
 │   ├── __init__.py               # Public API (source, open)
 │   ├── compressed_model.py       # HuggingFace wrapper (source, open)
-│   ├── cuda_attention.py         # CUDA kernel binding stubs (source, open)
+│   ├── cuda_attention.py         # Per-head CUDA kernel bindings (source, open)
+│   ├── cuda_attention_gqa.py     # GQA-aware CUDA kernel bindings (source, open)
+│   ├── fused_attention.py        # LlamaAttention monkey-patch helpers (source, open)
 │   ├── compression.cpython-310-x86_64-linux-gnu.so          # (binary, closed)
 │   ├── compressed_attention.cpython-310-x86_64-linux-gnu.so # (binary, closed)
 │   ├── patch_attention.cpython-310-x86_64-linux-gnu.so      # (binary, closed)
-│   └── _cda_kernels.cpython-310-x86_64-linux-gnu.so         # (binary, closed)
+│   ├── _cda_kernels.cpython-310-x86_64-linux-gnu.so         # (binary, closed)
+│   └── _cda_gqa_kernels.cpython-310-x86_64-linux-gnu.so     # (binary, shipped)
+│
+├── csrc/                         # GQA CUDA source (for on-platform rebuild)
+│   ├── cda_gqa_kernels.cu        # GQA-aware score + V kernels + pybind11
+│   └── setup_gqa.py              # CUDAExtension build script
 │
 ├── experiments/
 │   ├── benchmark_speed.py        # Decode latency + KV memory
-│   └── benchmark_ppl.py          # WikiText-2 perplexity
+│   ├── bench_ppl_stable.py       # WikiText-2 perplexity (FP16 / Decompress / CDA)
+│   └── bench_cda_integrated_single.py  # Figure 5(c) per-step E2E latency
 │
 └── tests/
     └── smoke_test.py             # Public-API smoke tests
@@ -133,28 +143,36 @@ Reports, for each context length:
 ### Figure 5(c): fair E2E decode comparison (FP16 / KIVI / CDA K4/V2)
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python experiments/bench_e2e_unified.py --N 8192
-CUDA_VISIBLE_DEVICES=0 python experiments/bench_e2e_unified.py --N 65536 --skip-kivi
+CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 8192
+CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 65536
 ```
 
-End-to-end per-step decode latency on Llama-3.1-8B-Instruct, all methods measured inside `model.forward()`. The CDA path injects `cuda_hw_attention_batched` into each `LlamaAttention.forward` via inline monkey-patching — uses only sub0's packaged kernels, no private source. Produces the numbers shown in the **GPU benchmark** table below.
+End-to-end per-step decode latency on Llama-3.1-8B-Instruct, all methods measured inside `model.forward()`. The CDA path patches each `LlamaAttention.forward` via `cda.fused_attention.patch_model_compressed_attn` and dispatches to the GQA-aware packaged kernel `cda.cuda_attention_gqa.cuda_hw_attention_gqa` — KV is indexed per query head as `kv_head = q_head // group_size` **inside** CUDA, so there is no Python-side `repeat_interleave` per decode step. Produces the numbers shown in the **GPU benchmark** table below.
+
+If the pre-built `cda/_cda_gqa_kernels*.so` does not match your PyTorch/CUDA combination, rebuild with:
+
+```bash
+python csrc/setup_gqa.py build_ext --inplace
+```
 
 ### WikiText-2 perplexity
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python experiments/benchmark_ppl.py \
-    --model meta-llama/Llama-3.1-8B-Instruct \
-    --bits 2 --max-length 2048 --skip-sinks 4 \
-    --output runs/cda_ppl.json
+CUDA_VISIBLE_DEVICES=0 python experiments/bench_ppl_stable.py \
+    --model llama8b --output runs/cda_ppl.json
 ```
 
-Outputs FP16 PPL, CDA PPL, and the delta on the WikiText-2 test split.
+Reports PPL for FP16 baseline, decompress-then-attend (2/4-bit), and CDA via the
+packaged GQA kernel (K2/V2, K4/V2). Stride=128 with ~15 eval positions per
+2048-token window — same methodology as the research tree's `bench_ppl_stable.py`.
+Use `--skip-cda` to validate just the quantization-error contribution; use
+`--skip-sign-fold` to drop the calibration-free sign-fold row.
 
 ---
 
 ## GPU benchmark (paper numbers)
 
-**Setup.** Llama-3.1-8B-Instruct, NVIDIA RTX A6000 (48 GB, sm_86). Per-step decode latency measured inside `model.forward()` with the attention path monkey-patched; FP16 uses the default FlashAttention SDPA. Numbers reproduce **Figure 5(c)** of the paper and are regenerated by [`experiments/bench_e2e_unified.py`](experiments/bench_e2e_unified.py) using sub0's packaged CUDA kernels.
+**Setup.** Llama-3.1-8B-Instruct, NVIDIA RTX A6000 (48 GB, sm_86). Per-step decode latency measured inside `model.forward()` with the attention path monkey-patched; FP16 uses the default FlashAttention SDPA. Numbers reproduce **Figure 5(c)** of the paper and are regenerated by [`experiments/bench_cda_integrated_single.py`](experiments/bench_cda_integrated_single.py) using sub0's packaged GQA-aware CUDA kernels (`cda._cda_gqa_kernels`).
 
 ### Per-step E2E decode latency (ms)
 
@@ -171,7 +189,7 @@ Notes:
 - KIVI and TurboQuant OOM at 64K on a single A6000; only FP16 and CDA survive.
 - At 64K, CDA K4/V2 achieves **4.43× FP16 decode speed** while using ≈5× less KV memory.
 - CDA latency barely grows with context (25 ms → 44 ms across 64× length), whereas FP16 scales linearly (27 ms → 197 ms).
-- Reproduce any row with `python experiments/bench_e2e_unified.py --N <ctx>`. The TurboQuant column requires the private research tree (decompress-then-attend monkey-patch is not shipped in this binary artifact).
+- Reproduce any row with `python experiments/bench_cda_integrated_single.py --N <ctx>`. The KIVI and TurboQuant columns require the private research tree (competitor monkey-patches are not shipped in this binary artifact).
 
 ---
 
@@ -185,7 +203,9 @@ Notes:
 | `cda.PCAQuantizedCompressor`             | quantizer    | PCA-projected baseline                 |
 | `cda.sw_attention`                       | attention    | Decompress → fp16 cuBLAS matmul        |
 | `cda.hw_attention(_score,_output)`       | attention    | Compressed-domain Python reference     |
-| `cda.cuda_attention.cuda_hw_attention_batched` | attention | Fused CUDA end-to-end step          |
+| `cda.cuda_attention.cuda_hw_attention_batched` | attention | Fused CUDA end-to-end step (per-head)  |
+| `cda.cuda_attention_gqa.cuda_hw_attention_gqa` | attention | GQA-aware fused CUDA step (paper Fig 5(c)) |
+| `cda.fused_attention.patch_model_compressed_attn` | integration | In-place `LlamaAttention.forward` patch |
 | `cda.compressed_model.CompressedKVModel` | integration  | HuggingFace model wrapper              |
 
 See each symbol's docstring for argument conventions.
