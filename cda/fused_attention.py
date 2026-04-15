@@ -1,10 +1,10 @@
 """Fused compressed-domain attention patch using sub0's GQA-aware CUDA kernels.
 
-Wraps :func:`cda.cuda_attention_gqa.cuda_hw_attention_gqa` (built from
-``csrc/cda_gqa_kernels.cu`` into the ``cda._cda_gqa_kernels`` binary
-extension) so it can be dropped into HuggingFace Llama models via
-monkey-patching. No CUDA source is compiled at import time — everything
-runs through the pre-built ``.so``.
+Wraps :func:`cda.cuda_attention_gqa.cuda_hw_attention_gqa` (the
+``cda._cda_gqa_kernels`` binary extension that ships with this package)
+so it can be dropped into HuggingFace Llama models via monkey-patching.
+No CUDA source is compiled at import time — everything runs through the
+pre-built ``.so``; sources are kept in the private maintainer tree.
 
 The GQA kernels index ``kv_head = q_head // group_size`` inside CUDA, so
 the per-step ``repeat_interleave`` that a per-head kernel would need on

@@ -1,11 +1,10 @@
 """CDA fused-path E2E decode benchmark (single N).
 
-Uses sub0's GQA-aware packaged CUDA kernels
-(``cda._cda_gqa_kernels`` built from ``csrc/cda_gqa_kernels.cu`` by
-``csrc/setup_gqa.py``). GQA indexing happens inside CUDA — KV is read as
-``kv_head = q_head // group_size`` — so there is no per-step
-``repeat_interleave`` on the Python side. This reproduces the paper's
-Figure 5(c) timings on a single A6000.
+Uses sub0's GQA-aware packaged CUDA kernels (the ``cda._cda_gqa_kernels``
+binary extension that ships with this package). GQA indexing happens
+inside CUDA — KV is read as ``kv_head = q_head // group_size`` — so
+there is no per-step ``repeat_interleave`` on the Python side. This
+reproduces the paper's Figure 5(c) timings on a single A6000.
 
 Paper reference (Figure 5(c), Llama-3.1-8B, A6000):
 

@@ -1,32 +1,35 @@
 """Python bindings for the GQA-aware CDA CUDA kernels.
 
-These kernels live in ``csrc/cda_gqa_kernels.cu`` and are built into the
-``cda._cda_gqa_kernels`` extension by ``csrc/setup_gqa.py``. Unlike the
-per-head kernels in :mod:`cda.cuda_attention`, these launch with grid
-``(token_block, query_head)`` and index KV as ``kv_head = q_head // group_size``
-inside the kernel — there is no Python-side ``repeat_interleave`` for GQA.
+The kernels are built into the ``cda._cda_gqa_kernels`` binary extension
+that ships with this package. CUDA sources are kept in the private
+maintainer tree. Unlike the per-head kernels in :mod:`cda.cuda_attention`,
+these launch with grid ``(token_block, query_head)`` and index KV as
+``kv_head = q_head // group_size`` inside the kernel — there is no
+Python-side ``repeat_interleave`` for GQA.
 
 Exposed kernels:
   * ``score_2b_gqa`` / ``score_4b_gqa``     — Q · compressed K  (scaled, GQA)
   * ``vfull_2b_gqa``                        — attn · compressed V  (dense)
   * ``vsparse_2b_gqa``                      — attn · compressed V  (TopK sparse)
 
-:func:`cuda_hw_attention_gqa` composes these into a full
-per-layer attention step on the compressed KV of one layer.
+:func:`cuda_hw_attention_gqa` composes these into a full per-layer
+attention step on the compressed KV of one layer.
 
-Install: run ``python csrc/setup_gqa.py build_ext --inplace`` from the
-repository root before importing this module.
+The shipped ``.so`` matches the tested platform (Python 3.10,
+PyTorch 2.5+cu121, sm_86 / RTX A6000). Contact the authors for a
+platform-specific binary drop if your stack differs.
 """
 from __future__ import annotations
 
 import torch
 
 try:
-    from cda import _cda_gqa_kernels as _gqa  # compiled via csrc/setup_gqa.py
+    from cda import _cda_gqa_kernels as _gqa  # ships as binary extension
 except ImportError as exc:
     raise ImportError(
-        "cda._cda_gqa_kernels is not built. Run "
-        "`python csrc/setup_gqa.py build_ext --inplace` from the repository root."
+        "cda._cda_gqa_kernels binary not found. The shipped .so matches the "
+        "tested platform (Python 3.10, PyTorch 2.5+cu121, sm_86). Contact the "
+        "authors for a platform-specific binary drop."
     ) from exc
 
 

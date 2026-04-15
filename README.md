@@ -23,8 +23,7 @@ This repository ships as a **binary artifact**. Pre-compiled extensions for the 
 | Quantizer / reference attention / cache          | Cython `.so`         | ✅            |
 | Fused CUDA kernels (per-head, score + V output)  | CUDA `.so`           | ✅            |
 | GQA-aware fused CUDA kernels (Fig 5(c))          | CUDA `.so`           | ✅            |
-| GQA CUDA source (for on-platform rebuild)        | `csrc/*.cu` + `setup_gqa.py` | ✅    |
-| Private Cython `.pyx`, main kernel `.cu`, maintainer tooling | —       | ❌ (private)  |
+| All CUDA `.cu` sources, Cython `.pyx`, maintainer tooling | —          | ❌ (private)  |
 
 **Tested platform.** Python 3.10, PyTorch 2.5 + CUDA 12.1, NVIDIA RTX A6000 (sm_86), Linux x86_64. The bundled binaries are ABI-compatible with this stack only.
 
@@ -52,10 +51,6 @@ cda_submission/
 │   ├── patch_attention.cpython-310-x86_64-linux-gnu.so      # (binary, closed)
 │   ├── _cda_kernels.cpython-310-x86_64-linux-gnu.so         # (binary, closed)
 │   └── _cda_gqa_kernels.cpython-310-x86_64-linux-gnu.so     # (binary, shipped)
-│
-├── csrc/                         # GQA CUDA source (for on-platform rebuild)
-│   ├── cda_gqa_kernels.cu        # GQA-aware score + V kernels + pybind11
-│   └── setup_gqa.py              # CUDAExtension build script
 │
 ├── experiments/
 │   ├── benchmark_speed.py        # Decode latency + KV memory
@@ -149,11 +144,7 @@ CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 655
 
 End-to-end per-step decode latency on Llama-3.1-8B-Instruct, all methods measured inside `model.forward()`. The CDA path patches each `LlamaAttention.forward` via `cda.fused_attention.patch_model_compressed_attn` and dispatches to the GQA-aware packaged kernel `cda.cuda_attention_gqa.cuda_hw_attention_gqa` — KV is indexed per query head as `kv_head = q_head // group_size` **inside** CUDA, so there is no Python-side `repeat_interleave` per decode step. Produces the numbers shown in the **GPU benchmark** table below.
 
-If the pre-built `cda/_cda_gqa_kernels*.so` does not match your PyTorch/CUDA combination, rebuild with:
-
-```bash
-python csrc/setup_gqa.py build_ext --inplace
-```
+The pre-built `cda/_cda_gqa_kernels*.so` matches the tested platform (Python 3.10, PyTorch 2.5+cu121, sm_86). For a different stack, contact the authors for a platform-specific binary drop.
 
 ### WikiText-2 perplexity
 
