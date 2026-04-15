@@ -195,18 +195,6 @@ See [`cda_vllm_submission/README.md`](cda_vllm_submission/README.md) for the ful
 
 ---
 
-## Citation
-
-```bibtex
-@inproceedings{cda_iccad2026,
-  title     = {Compressed-Domain Attention: Hadamard-Rotated KV Compression
-               for FPGA/ASIC LLM Inference},
-  author    = {Anonymous},
-  booktitle = {Proceedings of the International Conference on Computer-Aided Design},
-  year      = {2026}
-}
-```
-
 ## License
 
 Released for artifact review under the ICCAD 2026 reviewer agreement. A permissive open-source license will be attached upon acceptance, with the private source tree released alongside.
