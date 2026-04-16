@@ -31,7 +31,7 @@ setup(
     long_description=(ROOT / "README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     packages=find_packages(include=["cda", "cda.*"]),
-    python_requires=">=3.10,<3.11",
+    python_requires=">=3.10",
     install_requires=[
         "torch>=2.1",
         "transformers>=4.40",
