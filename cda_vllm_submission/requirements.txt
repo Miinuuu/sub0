@@ -1,5 +1,0 @@
-torch>=2.1
-numpy>=1.24
-# Main CDA package (quantizers, compressors, SW reference).
-# Install the sibling artifact first: pip install -e ../cda_submission
-cda>=0.1.0

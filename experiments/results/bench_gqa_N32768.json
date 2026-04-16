@@ -1,7 +1,0 @@
-{
-  "N": 32768,
-  "model": "meta-llama/Llama-3.1-8B-Instruct",
-  "fp16_ms": 110.58,
-  "k4v2_ms": 32.74,
-  "k4v2_vs_fp16": 3.38
-}

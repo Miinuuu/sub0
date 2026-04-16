@@ -1,65 +1,8 @@
 # CDA — Compressed-Domain Attention
 
-Hardware-efficient KV cache compression for LLM decode. Companion artifact for the ICCAD 2026 submission _"Compressed-Domain Attention: Algorithm-Hardware Co-Design for DSP-Free LLM Decoding"_.
+Artifact for the ASPLOS 2027 submission: *"Compressed-Domain Attention: Breaking the Memory Wall of Long-Context LLM Decoding via Lookup-Based Attention"*.
 
-CDA replaces TurboQuant's random orthogonal rotation with a Sylvester Hadamard matrix. The rotation becomes a DSP-free butterfly on FPGA/ASIC, and because the rotation is shared and data-oblivious, attention can be computed **directly on compressed indices via codebook lookup** — the KV cache is never decompressed during inference.
-
-| Metric (2-bit KV)              | vs FP16 KV | vs. decompress-then-matmul |
-|-------------------------------|-----------:|----------------------------:|
-| KV memory footprint           |      7.5× |                         — |
-| MAC operations per decode step |         — |                        37× |
-
-> **Companion artifact.** The [`cda_vllm_submission/`](cda_vllm_submission/) sub-package ships the paged-attention variant of CDA (vLLM `block_tables`-compatible CUDA kernels) under the same binary-distribution model. See the _Companion artifact_ section below.
-
----
-
-## Distribution model
-
-This repository ships as a **binary artifact**. Pre-compiled extensions for the tested reference platform are included so reviewers can reproduce all paper numbers without access to the private sources.
-
-| Component                                       | Format              | Shipped here? |
-|--------------------------------------------------|---------------------|:-------------:|
-| Public high-level wrappers & API stubs           | `.py` source        | ✅            |
-| Quantizer / reference attention / cache          | Cython `.so`         | ✅            |
-| Fused CUDA kernels (per-head, score + V output)  | CUDA `.so`           | ✅            |
-| GQA-aware fused CUDA kernels (Fig 5(c))          | CUDA `.so`           | ✅            |
-| All CUDA `.cu` sources, Cython `.pyx`, maintainer tooling | —          | ❌ (private)  |
-
-**Tested platform.** Python 3.10, PyTorch 2.5 + CUDA 12.1, NVIDIA RTX A6000 (sm_86), Linux x86_64. The bundled binaries are ABI-compatible with this stack only.
-
-**Rebuilding for a different platform.** Contact the authors for a platform-specific binary drop or an NDA-gated source tree.
-
----
-
-## Repository layout (shipped)
-
-```
-sub0/
-├── README.md
-├── requirements.txt
-├── setup.py                      # Binary-only install
-├── pyproject.toml
-│
-├── cda/                          # Importable Python package
-│   ├── __init__.py               # Public API (source, open)
-│   ├── compressed_model.py       # HuggingFace wrapper (source, open)
-│   ├── cuda_attention.py         # Per-head CUDA kernel bindings (source, open)
-│   ├── cuda_attention_gqa.py     # GQA-aware CUDA kernel bindings (source, open)
-│   ├── fused_attention.py        # LlamaAttention monkey-patch helpers (source, open)
-│   ├── compression.cpython-310-x86_64-linux-gnu.so          # (binary, closed)
-│   ├── compressed_attention.cpython-310-x86_64-linux-gnu.so # (binary, closed)
-│   ├── patch_attention.cpython-310-x86_64-linux-gnu.so      # (binary, closed)
-│   ├── _cda_kernels.cpython-310-x86_64-linux-gnu.so         # (binary, closed)
-│   └── _cda_gqa_kernels.cpython-310-x86_64-linux-gnu.so     # (binary, shipped)
-│
-├── experiments/
-│   ├── benchmark_speed.py        # Decode latency + KV memory
-│   ├── bench_ppl_stable.py       # WikiText-2 perplexity (FP16 / Decompress / CDA)
-│   └── bench_cda_integrated_single.py  # Figure 5(c) per-step E2E latency
-│
-└── tests/
-    └── smoke_test.py             # Public-API smoke tests
-```
+CDA computes attention directly on compressed KV indices via pre-computed LUT lookups, bypassing the decompress-then-attend overhead entirely.
 
 ---
 
@@ -68,15 +11,59 @@ sub0/
 ```bash
 pip install -r requirements.txt
 pip install -e .
+python tests/smoke_test.py   # 7/7 should pass
 ```
 
-No compilation step — the bundled `.so` files are dropped onto the import path directly.
+**Platform:** Python 3.10, PyTorch 2.5 + CUDA 12.1, NVIDIA RTX A6000 (sm_86), Linux x86_64.
 
 ---
 
-## Quick start
+## Reproducing Paper Results
 
-### Compress a tensor and round-trip it
+All results are pre-computed in `runs/`. To re-run:
+
+| Paper Location | Script | Command |
+|---|---|---|
+| Table 2 (PPL) | `bench_ppl_scale.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_ppl_scale.py` |
+| Table 2 (LongBench) | `bench_longbench_single.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_longbench_single.py --task narrativeqa` |
+| Table 4 (Breakdown) | `bench_breakdown.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_breakdown.py` |
+| Table 5 (Batched) | `bench_batched_throughput.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_batched_throughput.py` |
+| Fig 4(a) Kernel speedup | `bench_table5.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_table5.py` |
+| Fig 4(b) Long-ctx PPL | `bench_longctx_ppl_topk.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_longctx_ppl_topk.py` |
+| Fig 4(c) E2E decode | `bench_cda_integrated_single.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 65536` |
+| Fig 4(d) TopK tradeoff | `bench_table5.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_table5.py --topk 128` |
+| Fig 5(a) TopK ablation | `bench_table5.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_table5.py --topk 0,32,64,128,256,512` |
+| Fig 5(b) Roofline | `bench_gpu_roofline.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_gpu_roofline.py` |
+| Fig 5(c) Batch capacity | `bench_memory_capacity.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_memory_capacity.py` |
+| Fig 5(d) Throughput | `bench_batch_serving.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_batch_serving.py` |
+| S6.2 NIAH | `bench_niah_topk.py` | `CUDA_VISIBLE_DEVICES=0 python experiments/bench_niah_topk.py` |
+
+---
+
+## Repository Layout
+
+```
+sub0/
+├── cda/                        # Package (binary + Python wrappers)
+│   ├── __init__.py             # Public API
+│   ├── compression.*.so        # Quantizers (binary)
+│   ├── compressed_attention.*.so
+│   ├── _cda_kernels.*.so       # Per-head CUDA kernels (binary)
+│   ├── _cda_gqa_kernels.*.so   # GQA-aware CUDA kernels (binary)
+│   ├── cuda_attention.py       # Per-head kernel wrapper
+│   ├── cuda_attention_gqa.py   # GQA kernel wrapper
+│   ├── fused_attention.py      # HF model monkey-patch
+│   └── compressed_model.py     # HF model wrapper
+├── experiments/                # 12 scripts (one per paper figure/table)
+├── runs/                       # 38 JSON result files
+└── tests/smoke_test.py         # 7 correctness tests
+```
+
+**Binary distribution.** Core CUDA/Cython sources are not included. Pre-built `.so` files match the tested platform. Contact authors for other platforms.
+
+---
+
+## Quick Example
 
 ```python
 import torch
@@ -84,160 +71,13 @@ from cda import HadamardQuantCompressor
 
 comp = HadamardQuantCompressor(dim=128, bit_width=2, half_rotation=True)
 x = torch.randn(64, 128, device="cuda")
-compressed = comp.quantize(x)          # CompressedTensor (bit-packed indices + norms)
-restored   = comp.dequantize(compressed)
-print((x - restored).pow(2).mean())
+compressed = comp.quantize(x)
+restored = comp.dequantize(compressed)
+print(f"MSE: {(x - restored).pow(2).mean():.4f}")
 ```
-
-### Swap in a compressed KV cache for any HF model
-
-```python
-from cda.compressed_model import CompressedKVModel
-
-model = CompressedKVModel("meta-llama/Llama-3.1-8B-Instruct",
-                          bit_width=2, skip_sinks=4)
-print(model.generate("The meaning of life is ", max_new_tokens=64))
-```
-
-Prefill runs normally; KV is compressed in-place before decode.
-
-### Call the fused CUDA kernels directly
-
-```python
-from cda.cuda_attention import cuda_hw_attention_batched
-# See experiments/benchmark_speed.py and tests/smoke_test.py for complete call sites.
-```
-
----
-
-## Reproducing the paper numbers
-
-### Smoke test
-
-```bash
-python tests/smoke_test.py
-```
-
-Exercises the public API: compressor round-trip at 2/4-bit, layer-adaptive schedules, SW vs dense attention agreement, HW == SW equivalence, and the fused CUDA kernel against the SW reference (skipped on CPU-only setups).
-
-### Decode speed + KV memory
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python experiments/benchmark_speed.py \
-    --model meta-llama/Llama-3.2-1B-Instruct \
-    --ctx 1024,4096,8192,16384 --bits 2 \
-    --output runs/cda_speed.json
-```
-
-Reports, for each context length:
-
-* FP16 baseline decode (ms) and peak memory (MiB)
-* CDA-SW decode (ms / MiB) — compressed KV, decompress per step
-* CDA-HW kernel microbenchmark (ms) — fused CUDA kernel on synthetic input
-
-### Figure 5(c): fair E2E decode comparison (FP16 / KIVI / CDA K4/V2)
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 8192
-CUDA_VISIBLE_DEVICES=0 python experiments/bench_cda_integrated_single.py --N 65536
-```
-
-End-to-end per-step decode latency on Llama-3.1-8B-Instruct, all methods measured inside `model.forward()`. The CDA path patches each `LlamaAttention.forward` via `cda.fused_attention.patch_model_compressed_attn` and dispatches to the GQA-aware packaged kernel `cda.cuda_attention_gqa.cuda_hw_attention_gqa` — KV is indexed per query head as `kv_head = q_head // group_size` **inside** CUDA, so there is no Python-side `repeat_interleave` per decode step. Produces the numbers shown in the **GPU benchmark** table below.
-
-The pre-built `cda/_cda_gqa_kernels*.so` matches the tested platform (Python 3.10, PyTorch 2.5+cu121, sm_86). For a different stack, contact the authors for a platform-specific binary drop.
-
-### WikiText-2 perplexity
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python experiments/bench_ppl_stable.py \
-    --model llama8b --output runs/cda_ppl.json
-```
-
-Reports PPL for FP16 baseline, decompress-then-attend (2/4-bit), and CDA via the
-packaged GQA kernel (K2/V2, K4/V2). Stride=128 with ~15 eval positions per
-2048-token window — same methodology as the research tree's `bench_ppl_stable.py`.
-Use `--skip-cda` to validate just the quantization-error contribution; use
-`--skip-sign-fold` to drop the calibration-free sign-fold row.
-
----
-
-## GPU benchmark (paper numbers)
-
-**Setup.** Llama-3.1-8B-Instruct, NVIDIA RTX A6000 (48 GB, sm_86). Per-step decode latency measured inside `model.forward()` with the attention path monkey-patched; FP16 uses the default FlashAttention SDPA. Numbers reproduce **Figure 5(c)** of the paper and are regenerated by [`experiments/bench_cda_integrated_single.py`](experiments/bench_cda_integrated_single.py) using sub0's packaged GQA-aware CUDA kernels (`cda._cda_gqa_kernels`).
-
-### Per-step E2E decode latency (ms)
-
-| $N_{\text{ctx}}$ |  FP16 | KIVI 2-bit | TurboQuant 2-bit | **CDA K4/V2** | CDA vs. FP16 |
-|-----------------:|------:|-----------:|-----------------:|--------------:|-------------:|
-|            1 024 |  26.8 |       28.3 |             34.0 |      **25.1** |       1.07× |
-|            4 096 |  33.2 |       37.8 |             59.3 |      **25.8** |       1.29× |
-|            8 192 |  41.9 |       50.4 |             91.9 |      **26.9** |       1.56× |
-|           16 384 |  67.8 |       84.1 |            166.1 |      **29.2** |       2.32× |
-|           32 768 | 110.8 |      143.2 |            308.3 |      **35.1** |       3.16× |
-|           65 536 | 196.8 |  OOM       |  OOM             |      **44.4** |       4.43× |
-
-Notes:
-- KIVI and TurboQuant OOM at 64K on a single A6000; only FP16 and CDA survive.
-- At 64K, CDA K4/V2 achieves **4.43× FP16 decode speed** while using ≈5× less KV memory.
-- CDA latency barely grows with context (25 ms → 44 ms across 64× length), whereas FP16 scales linearly (27 ms → 197 ms).
-- Reproduce any row with `python experiments/bench_cda_integrated_single.py --N <ctx>`. The KIVI and TurboQuant columns require the private research tree (competitor monkey-patches are not shipped in this binary artifact).
-
----
-
-## Public API reference
-
-| Symbol                                   | Layer        | What it does                           |
-|------------------------------------------|--------------|----------------------------------------|
-| `cda.TurboQuantCompressor`               | quantizer    | Random-orthogonal rotation + Lloyd-Max |
-| `cda.HadamardQuantCompressor`            | quantizer    | DSP-free Sylvester Hadamard rotation   |
-| `cda.LayerAdaptiveCompressor`            | quantizer    | Per-layer bit schedule                 |
-| `cda.PCAQuantizedCompressor`             | quantizer    | PCA-projected baseline                 |
-| `cda.sw_attention`                       | attention    | Decompress → fp16 cuBLAS matmul        |
-| `cda.hw_attention(_score,_output)`       | attention    | Compressed-domain Python reference     |
-| `cda.cuda_attention.cuda_hw_attention_batched` | attention | Fused CUDA end-to-end step (per-head)  |
-| `cda.cuda_attention_gqa.cuda_hw_attention_gqa` | attention | GQA-aware fused CUDA step (paper Fig 5(c)) |
-| `cda.fused_attention.patch_model_compressed_attn` | integration | In-place `LlamaAttention.forward` patch |
-| `cda.compressed_model.CompressedKVModel` | integration  | HuggingFace model wrapper              |
-
-See each symbol's docstring for argument conventions.
-
----
-
-## Hardware notes
-
-The paper's FPGA/ASIC numbers are generated from a separate RTL tree (not included here). This artifact exercises the reference CUDA implementation used to cross-validate the hardware numerically: identical Lloyd-Max codebook, identical Hadamard rotation, identical bit-packing.
-
----
-
-## Companion artifact: `cda_vllm_submission/`
-
-The `cda_vllm_submission/` sub-package, released alongside the main package, provides the **vLLM-style paged-attention variant** of CDA. It adds paged CUDA kernels that resolve compressed KV through vLLM's logical→physical `block_tables`:
-
-| Kernel                       | Role                                                           |
-|------------------------------|----------------------------------------------------------------|
-| `score_paged2b_forward`      | Q · compressed K with bank-conflict-free shared-memory layout  |
-| `vfull_paged2b_forward`      | Dense attn · compressed V over all paged tokens                |
-| `vsparse_paged2b_forward`    | Top-K sparse attn · compressed V, indices→pages                |
-| `cuda_cda_paged` (composed)  | Full fused decode step: score → softmax → (sparse\|dense) V    |
-
-**Why ship it separately.** The main `cda` package focuses on the quantizer, SW/HW reference, and the contiguous-KV CUDA kernels that the ICCAD paper tables use. The paged variant is orthogonal — it demonstrates that the same 2-bit packed layout drops into a vLLM-style serving stack without re-encoding — so we keep it as a self-contained sub-package that depends on the main one.
-
-**Install order.**
-
-```bash
-# 1) this package
-pip install -e .
-
-# 2) companion paged kernels
-pip install -e cda_vllm_submission
-```
-
-**Validation.** `cda_vllm_submission/tests/test_paged.py` compares the paged kernel to a pure-PyTorch decode-then-attention reference (rel_err ≈ 8.5 × 10⁻⁸ in the current build) and to the dense paged path for the Top-K sparsity gate.
-
-See [`cda_vllm_submission/README.md`](cda_vllm_submission/README.md) for the full API, layout, and reproduction instructions.
 
 ---
 
 ## License
 
-Released for artifact review under the ICCAD 2026 reviewer agreement. A permissive open-source license will be attached upon acceptance, with the private source tree released alongside.
+Released for anonymous artifact review. Open-source license upon acceptance.
