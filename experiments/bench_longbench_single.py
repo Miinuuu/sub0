@@ -1,11 +1,14 @@
 """Single-task LongBench: run one task with N samples."""
 import os, sys, gc, json, argparse, torch
 
-
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from cda import HadamardQuantCompressor
-from cda.core.compressed_generate import _compress_kv_cache, manual_decode_step
+from cda.fused_attention import (
+    _compress_kv_cache_cuda,
+    _PositionOnlyCache,
+    patch_model_compressed_attn,
+    unpatch_model,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", required=True)
@@ -39,17 +42,27 @@ def generate(model, tokenizer, prompt, k_comp, v_comp, max_new=MAX_NEW):
     enc = tokenizer(prompt, return_tensors="pt", max_length=MAX_LEN, truncation=True).to(device)
     ctx = enc.input_ids[:, :-1]; nxt = enc.input_ids[:, -1:]
     ctx_len = ctx.shape[1]
+    n_layers = model.config.num_hidden_layers
     with torch.no_grad():
         out = model(ctx, use_cache=True, return_dict=True)
         kv = out.past_key_values
-        compressed = _compress_kv_cache(kv, k_comp, v_comp, skip_sinks=4)
+        compressed = _compress_kv_cache_cuda(kv, k_comp, v_comp)
         del kv, out; gc.collect(); torch.cuda.empty_cache()
+
+        patch_model_compressed_attn(model, k_comp, v_comp)
+        for li in range(n_layers):
+            model._cda_compressed[li] = compressed[li]
+        for key in ("_rotation", "_codebook_k", "_codebook_v"):
+            model._cda_compressed[key] = compressed[key]
+
         tokens = []
         for step in range(max_new):
-            logits = manual_decode_step(model, nxt, compressed, k_comp, v_comp, ctx_len + step)
+            pc = _PositionOnlyCache(n_layers, ctx_len + step, device, torch.float16)
+            logits = model(nxt, past_key_values=pc, use_cache=True).logits
             nxt = torch.argmax(logits[:, -1:], dim=-1)
             tokens.append(nxt.item())
             if nxt.item() == tokenizer.eos_token_id: break
+        unpatch_model(model)
     return tokenizer.decode(tokens, skip_special_tokens=True)
 
 def generate_fp16(model, tokenizer, prompt, max_new=MAX_NEW):
