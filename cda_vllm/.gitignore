@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.o
+*.c
+*.ninja_deps
+*.ninja_log
+.pytest_cache/
+
+# Maintainer-only (never shipped)
+_maintainer_build.py
+_private/
+
+# Reproduction artifacts
+runs/
+*.log
