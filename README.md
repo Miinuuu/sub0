@@ -1,6 +1,6 @@
 # CDA — Compressed-Domain Attention
 
-Hardware-efficient KV cache compression for LLM decode. Companion artifact for the ICCAD 2026 submission _"Compressed-Domain Attention: Hadamard-Rotated KV Compression for FPGA/ASIC LLM Inference"_.
+Hardware-efficient KV cache compression for LLM decode. Companion artifact for the ICCAD 2026 submission _"Compressed-Domain Attention: Algorithm-Hardware Co-Design for DSP-Free LLM Decoding"_.
 
 CDA replaces TurboQuant's random orthogonal rotation with a Sylvester Hadamard matrix. The rotation becomes a DSP-free butterfly on FPGA/ASIC, and because the rotation is shared and data-oblivious, attention can be computed **directly on compressed indices via codebook lookup** — the KV cache is never decompressed during inference.
 
@@ -34,7 +34,7 @@ This repository ships as a **binary artifact**. Pre-compiled extensions for the 
 ## Repository layout (shipped)
 
 ```
-cda_submission/
+sub0/
 ├── README.md
 ├── requirements.txt
 ├── setup.py                      # Binary-only install
