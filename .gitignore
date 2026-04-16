@@ -16,3 +16,6 @@ _private/
 # Reproduction artifacts
 runs/
 *.log
+fpga_cda_v4.7/forward.xclbin
+fpga_cda_v4.7/weights.bin
+fpga_cda_v4.7/tokenizer.bin
