@@ -1,0 +1,47 @@
+[
+  {
+    "backend": "FLASH_ATTN",
+    "B": 1,
+    "N": 16384,
+    "ok": true,
+    "tok_per_s": 37.3,
+    "per_req_tok_ms": 26.8,
+    "elapsed_ms": 3430.0
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 4,
+    "N": 16384,
+    "ok": true,
+    "tok_per_s": 107.6,
+    "per_req_tok_ms": 37.19,
+    "elapsed_ms": 4760.0
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 8,
+    "N": 16384,
+    "ok": true,
+    "tok_per_s": 160.6,
+    "per_req_tok_ms": 49.82,
+    "elapsed_ms": 6377.0
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 16,
+    "N": 16384,
+    "ok": true,
+    "tok_per_s": 34.6,
+    "per_req_tok_ms": 461.78,
+    "elapsed_ms": 59108.0
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 32,
+    "N": 16384,
+    "ok": true,
+    "tok_per_s": 35.3,
+    "per_req_tok_ms": 905.69,
+    "elapsed_ms": 115929.0
+  }
+]

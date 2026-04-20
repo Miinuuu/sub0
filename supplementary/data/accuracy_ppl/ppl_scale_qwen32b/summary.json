@@ -1,0 +1,27 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "alias": "Qwen2.5-32B-Instruct",
+  "head_dim": 128,
+  "n_layers": 64,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "kivi-4": {
+        "ppl": 46035.3647,
+        "n_pos": 63,
+        "time_s": 162.2
+      },
+      "kivi-2": {
+        "ppl": 518228.8002,
+        "n_pos": 63,
+        "time_s": 119.2
+      },
+      "turbo-2": {
+        "ppl": 3.7876,
+        "n_pos": 63,
+        "time_s": 117.9
+      }
+    }
+  }
+}

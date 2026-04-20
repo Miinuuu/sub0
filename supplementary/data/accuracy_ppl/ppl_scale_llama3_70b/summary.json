@@ -1,0 +1,27 @@
+{
+  "model": "meta-llama/Llama-3.1-70B-Instruct",
+  "alias": "llama70b",
+  "head_dim": 128,
+  "n_layers": 80,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 2.3051,
+        "n_pos": 63,
+        "time_s": 209.7
+      },
+      "cda-4": {
+        "ppl": 2.366,
+        "n_pos": 63,
+        "time_s": 213.5
+      },
+      "cda-k4v2": {
+        "ppl": 2.5352,
+        "n_pos": 63,
+        "time_s": 216.1
+      }
+    }
+  }
+}

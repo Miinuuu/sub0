@@ -1,0 +1,27 @@
+=== GEAR Direct PPL Measurement (2026-04-08) ===
+Eval: WikiText-2, seq=4096, stride=64, 56 positions, A6000
+
+Model: Llama-2-7B
+  fp16        PPL=5.81
+  GEAR 2-bit  PPL=6.26
+  GEAR 4-bit  PPL=5.86
+  Speed: fp16=37.56ms, GEAR 2-bit=674.42ms
+
+Model: Llama-3.1-8B-Instruct
+  fp16        PPL=7.44
+  GEAR 2-bit  PPL=8.24
+  GEAR 4-bit  PPL=7.64
+
+Model: Mistral-7B-v0.3
+  fp16        PPL=5.37
+  GEAR 2-bit  PPL=5.53
+  GEAR 4-bit  PPL=5.38
+  Speed: fp16=35.17ms, GEAR 2-bit=280.05ms
+
+Model: Llama-2-13B
+  fp16        PPL=4.36
+  GEAR 2-bit  PPL=4.53
+  GEAR 4-bit  PPL=4.58
+
+GEAR config: compress_method=GEAR, quantize_bit=2, group_size=64, loop=3, rank=2, rankv=2, left=0.02
+GEAR 4-bit config: KCVT, quantize_bit=4, group_size=seq_len

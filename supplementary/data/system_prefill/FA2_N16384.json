@@ -1,0 +1,15 @@
+{
+  "backend": "FA2",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "N_requested": 16384,
+  "N_actual": 16384,
+  "t_prefill_ms": 87.21652999520302,
+  "mem_before_mb": 66.0,
+  "mem_after_load_mb": 42802.0,
+  "mem_after_prefill_mb": 43806.0,
+  "model_load_mb": 42736.0,
+  "kv_peak_delta_mb": 1004.0,
+  "gen_token_ids": [
+    319
+  ]
+}

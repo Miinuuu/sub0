@@ -1,0 +1,10 @@
+{
+  "model": "mistralai/Mistral-7B-v0.3",
+  "k_bits": 4,
+  "v_bits": 4,
+  "group_size": 32,
+  "residual_length": 128,
+  "ppl": 8.3128,
+  "n_positions": 63,
+  "time_s": 51.4
+}

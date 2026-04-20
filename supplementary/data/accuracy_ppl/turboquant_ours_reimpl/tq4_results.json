@@ -1,0 +1,47 @@
+{
+  "description": "TurboQuant 4-bit WikiText-2 PPL (seq=4096, stride=64, 56 positions)",
+  "method": "TurboQuant (random rotation + Lloyd-Max, 4-bit)",
+  "date": "2026-04-13",
+  "results": {
+    "llama2-7b": {
+      "model": "meta-llama/Llama-2-7B-hf",
+      "fp16": 5.81,
+      "tq4": 5.82,
+      "tq2": 7.98,
+      "server": "local (A6000)"
+    },
+    "mistral-7b": {
+      "model": "mistralai/Mistral-7B-v0.3",
+      "fp16": 5.37,
+      "tq4": 5.42,
+      "tq2": 6.85,
+      "server": "local (A6000)"
+    },
+    "llama3-8b": {
+      "model": "meta-llama/Llama-3.1-8B-Instruct",
+      "fp16": 7.44,
+      "tq4": 7.40,
+      "tq2": 8.35,
+      "server": "local (A6000)"
+    },
+    "llama2-13b": {
+      "model": "meta-llama/Llama-2-13B-hf",
+      "fp16": 4.36,
+      "tq4": 4.36,
+      "server": "local (A6000)"
+    },
+    "qwen25-32b": {
+      "model": "Qwen/Qwen2.5-32B-Instruct",
+      "fp16": 2.03,
+      "tq4": 2.09,
+      "tq2": 3.58,
+      "server": "local (2×A6000)"
+    },
+    "llama2-70b": {
+      "model": "meta-llama/Llama-2-70b-hf",
+      "fp16": 2.66,
+      "tq4": 2.67,
+      "server": "lab (4×A6000, kivi env)"
+    }
+  }
+}

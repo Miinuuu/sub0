@@ -1,0 +1,15 @@
+{
+  "backend": "CDA",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "N_requested": 131064,
+  "N_actual": 131064,
+  "t_prefill_ms": 1445.8471536636353,
+  "mem_before_mb": 66.0,
+  "mem_after_load_mb": 42810.0,
+  "mem_after_prefill_mb": 46408.0,
+  "model_load_mb": 42744.0,
+  "kv_peak_delta_mb": 3598.0,
+  "gen_token_ids": [
+    45509
+  ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "backend": "CDA",
+    "B": 1,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 30.6,
+    "per_req_tok_ms": 32.64,
+    "elapsed_ms": 2089.0
+  },
+  {
+    "backend": "CDA",
+    "B": 2,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 47.3,
+    "per_req_tok_ms": 42.3,
+    "elapsed_ms": 2707.0
+  },
+  {
+    "backend": "CDA",
+    "B": 4,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 66.5,
+    "per_req_tok_ms": 60.19,
+    "elapsed_ms": 3852.0
+  },
+  {
+    "backend": "CDA",
+    "B": 8,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 79.2,
+    "per_req_tok_ms": 101.06,
+    "elapsed_ms": 6468.0
+  },
+  {
+    "backend": "CDA",
+    "B": 16,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 92.3,
+    "per_req_tok_ms": 173.39,
+    "elapsed_ms": 11097.0
+  },
+  {
+    "backend": "CDA",
+    "B": 32,
+    "N": 32768,
+    "ok": true,
+    "tok_per_s": 3.0,
+    "per_req_tok_ms": 10641.87,
+    "elapsed_ms": 681080.0
+  }
+]

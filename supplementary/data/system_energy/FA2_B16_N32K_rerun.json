@@ -1,0 +1,40 @@
+{
+  "backend": "FA2",
+  "B": 16,
+  "N": 32768,
+  "output_len": 128,
+  "gpu_id": 1,
+  "iters": 3,
+  "per_round": [
+    {
+      "iter": 0,
+      "elapsed_s": 145.88046783208847,
+      "energy_j": 43437.068916425465,
+      "avg_power_w": 298.098187628867,
+      "n_samples": 2910,
+      "total_tokens": 2048,
+      "mj_per_tok": 21209.506306848372
+    },
+    {
+      "iter": 1,
+      "elapsed_s": 145.75213523209095,
+      "energy_j": 43547.49279738699,
+      "avg_power_w": 298.85860137457104,
+      "n_samples": 2910,
+      "total_tokens": 2048,
+      "mj_per_tok": 21263.424217474116
+    },
+    {
+      "iter": 2,
+      "elapsed_s": 145.74002587422729,
+      "energy_j": 43560.91263482833,
+      "avg_power_w": 298.8956735395208,
+      "n_samples": 2910,
+      "total_tokens": 2048,
+      "mj_per_tok": 21269.97687247477
+    }
+  ],
+  "mj_per_tok_mean": 21247.63579893242,
+  "mj_per_tok_min": 21209.506306848372,
+  "mj_per_tok_max": 21269.97687247477
+}

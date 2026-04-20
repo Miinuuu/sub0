@@ -1,0 +1,37 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "alias": "Qwen2.5-32B-Instruct",
+  "head_dim": 128,
+  "n_layers": 64,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "c4": {
+      "fp16": {
+        "ppl": 14.7651,
+        "n_pos": 63,
+        "time_s": 113.0
+      },
+      "cda-4": {
+        "ppl": 14.7122,
+        "n_pos": 63,
+        "time_s": 116.5
+      },
+      "cda-k4v2": {
+        "ppl": 14.894,
+        "n_pos": 63,
+        "time_s": 116.9
+      },
+      "cda-2": {
+        "ppl": 14.1616,
+        "n_pos": 63,
+        "time_s": 116.9
+      },
+      "turbo-2": {
+        "ppl": 15.1106,
+        "n_pos": 63,
+        "time_s": 116.9
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "backend": "CDA",
+  "gpu_memory_utilization": 0.5,
+  "max_model_len_tested": 131072,
+  "ok": true,
+  "error": "introspection: 'LLMEngine' object has no attribute 'model_executor'",
+  "num_gpu_blocks": null,
+  "block_size_tokens": null,
+  "max_context_capacity": null
+}

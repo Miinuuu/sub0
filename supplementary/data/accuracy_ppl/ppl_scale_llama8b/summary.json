@@ -1,0 +1,32 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "alias": "llama8b",
+  "head_dim": 128,
+  "n_layers": 32,
+  "max_ctx": 4096,
+  "stride": 256,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 4.0286,
+        "n_pos": 15,
+        "time_s": 10.0
+      },
+      "cda-k4v2": {
+        "ppl": 4.063,
+        "n_pos": 15,
+        "time_s": 10.4
+      },
+      "cda-4": {
+        "ppl": 4.068,
+        "n_pos": 15,
+        "time_s": 10.2
+      },
+      "cda-2": {
+        "ppl": 4.2317,
+        "n_pos": 15,
+        "time_s": 10.4
+      }
+    }
+  }
+}

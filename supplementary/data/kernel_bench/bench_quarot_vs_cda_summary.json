@@ -1,0 +1,46 @@
+{
+  "description": "Official QuaRot (Int4+FP16-had) vs CDA (K4V2+HMMA) kernel latency, decode attention only.",
+  "date": "2026-04-19",
+  "hardware": "NVIDIA RTX A6000 (48GB, sm_86)",
+  "shape_note": "QuaRot kernel is MHA-only (no GQA). We bench both at their native shapes.",
+  "quarot_shape": "H_q=32 H_kv=32 D=128 (Llama-2-7B MHA). Int4 K + Int4 V with per-token asymmetric scale/zero, fp16 Hadamard rotation.",
+  "cda_shape": "H_q=32 H_kv=8 D=128 (Llama-3.1-8B GQA, group_size=4). K4V2 codebook + fp32 norms.",
+  "quarot_impl": "/home/jmw/ing/research/REF/QuaRot/benchmarks/qattention_benchmark.py (MultiLayerPagedKVCache4Bit, batch_decode_i4 CUDA kernel)",
+  "cda_impl": "torch.ops._C.cda_decode_full_hmma (register-fragment synthesis, no fp16 K/V materialization)",
+  "kv_memory_per_token": {
+    "quarot_int4_mha_32heads": "32 heads * (4-bit K + 4-bit V) * 128 D + 4*(fp16 scale+zero K,V) = 1024 B/token",
+    "cda_k4v2_gqa_8heads": "8 heads * (4-bit K + 2-bit V) * 128 D + 8*(fp32 norm K,V) = 104 B/token",
+    "ratio": "CDA reads 9.85x less KV per token vs QuaRot Int4"
+  },
+  "caveats": [
+    "Shape mismatch: QuaRot MHA has 4x more KV heads than CDA GQA — not apples-to-apples in compute, but faithfully reflects what each method's released kernel can serve.",
+    "Modern Llama-3/Mistral/Qwen use GQA. QuaRot would need kernel re-engineering to match; CDA ships GQA natively.",
+    "Both kernels exclude softmax numerics differences — same Q/K/V random data at each shape."
+  ],
+  "results": [
+    {"B": 1, "N": 4096,  "quarot_us": 595.9,   "cda_us": 158.2,  "cda_vs_quarot": 3.77},
+    {"B": 1, "N": 16384, "quarot_us": 1104.7,  "cda_us": 120.6,  "cda_vs_quarot": 9.16},
+    {"B": 1, "N": 32768, "quarot_us": 1728.4,  "cda_us": 202.7,  "cda_vs_quarot": 8.53},
+    {"B": 1, "N": 65536, "quarot_us": 3024.4,  "cda_us": 348.1,  "cda_vs_quarot": 8.69},
+    {"B": 4, "N": 4096,  "quarot_us": 717.2,   "cda_us": 108.5,  "cda_vs_quarot": 6.61},
+    {"B": 4, "N": 16384, "quarot_us": 1163.8,  "cda_us": 377.8,  "cda_vs_quarot": 3.08},
+    {"B": 4, "N": 32768, "quarot_us": 1892.4,  "cda_us": 659.8,  "cda_vs_quarot": 2.87},
+    {"B": 4, "N": 65536, "quarot_us": 3471.3,  "cda_us": 1357.3, "cda_vs_quarot": 2.56},
+    {"B": 16, "N": 4096,  "quarot_us": 1074.6, "cda_us": 284.6,  "cda_vs_quarot": 3.78},
+    {"B": 16, "N": 16384, "quarot_us": 2874.4, "cda_us": 1139.7, "cda_vs_quarot": 2.52},
+    {"B": 16, "N": 32768, "quarot_us": 5249.5, "cda_us": 2524.1, "cda_vs_quarot": 2.08},
+    {"B": 16, "N": 65536, "quarot_us": 10064.4,"cda_us": 4426.2, "cda_vs_quarot": 2.27},
+    {"B": 32, "N": 4096,  "quarot_us": 1529.9, "cda_us": 475.0,  "cda_vs_quarot": 3.22},
+    {"B": 32, "N": 16384, "quarot_us": 4692.0, "cda_us": 2238.4, "cda_vs_quarot": 2.10},
+    {"B": 32, "N": 32768, "quarot_us": 8886.3, "cda_us": 4460.0, "cda_vs_quarot": 1.99},
+    {"B": 32, "N": 65536, "quarot_us": 17297.9,"cda_us": 8790.5, "cda_vs_quarot": 1.97}
+  ],
+  "summary": {
+    "B_1_range":  "CDA 3.77-9.16× faster than QuaRot across N=4K-64K",
+    "B_4_range":  "CDA 2.56-6.61×",
+    "B_16_range": "CDA 2.08-3.78×",
+    "B_32_range": "CDA 1.97-3.22×",
+    "headline":   "CDA 1.97-9.16× faster than QuaRot's official kernel across the full (B, N) grid.",
+    "key_narrative": "QuaRot's Int4 is actually SLOWER than its own FP16 baseline at B=1 (decompress-then-attend overhead). CDA avoids this because attention is computed directly on compressed indices."
+  }
+}

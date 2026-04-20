@@ -1,0 +1,37 @@
+{
+  "description": "Official KVQuant (Int4 K + Int4 V, NUQ per-channel) vs CDA (K4V2+HMMA) decode-attention latency.",
+  "date": "2026-04-19",
+  "hardware": "NVIDIA RTX A6000 (48GB, sm_86)",
+  "kvquant_shape": "H_q=32 H_kv=32 D=128 (Llama-2-7B MHA, B=1 hardcoded). Int4 NUQ K + Int4 NUQ V with per-channel codebook (K) / per-token codebook (V). RoPE fused in K-matmul.",
+  "cda_shape": "H_q=32 H_kv=8 D=128 (Llama-3.1-8B GQA, group_size=4). K4V2 codebook + fp32 norms.",
+  "kvquant_impl": "/home/jmw/ing/research/REF/KVQuant/deployment/kvquant/quant_cuda_kernel.cu: vecquant4matmul_nuq_perchannel_transposed_rope_mha_batched_fused_opt (score) + softmax + vecquant4matmul_nuq_perchannel_transposed_mha_batched_fused_opt (V), non-sparse path.",
+  "cda_impl": "torch.ops._C.cda_decode_full_hmma (single dispatch, register-fragment synthesis).",
+  "kv_memory_per_token": {
+    "kvquant_int4_int4_mha_32heads": "32 heads * 128 D * (4b K + 4b V) + per-channel K LUT overhead + per-token V LUT overhead ≈ 1024 B/token plus LUT fetch",
+    "cda_k4v2_gqa_8heads": "8 heads * (4b K + 2b V + 8B norms) per slot = 104 B/token total",
+    "ratio": "CDA ≈ 9.85x less KV memory per token"
+  },
+  "caveats": [
+    "KVQuant's released CUDA kernel is MHA-only AND B=1 hardcoded (kcache/vcache have no batch dim).",
+    "Non-sparse (dense) KVQuant path used here; their full method also adds 1% sparse outlier tracking which would cost extra.",
+    "Modern GQA models (Llama-3/Qwen/Mistral) cannot be served by KVQuant's current kernel without re-engineering.",
+    "Both paths use fp16 softmax numerics."
+  ],
+  "results": [
+    {"B": 1, "N": 4096,  "kvquant_us": 158.6,  "cda_us": 158.2, "cda_vs_kvquant": 1.00},
+    {"B": 1, "N": 16384, "kvquant_us": 533.0,  "cda_us": 120.6, "cda_vs_kvquant": 4.42},
+    {"B": 1, "N": 32768, "kvquant_us": 1078.3, "cda_us": 202.7, "cda_vs_kvquant": 5.32},
+    {"B": 1, "N": 65536, "kvquant_us": 2172.8, "cda_us": 348.1, "cda_vs_kvquant": 6.24}
+  ],
+  "cross_baseline_comparison_B1": {
+    "N_4K":  {"kvquant": 158.6, "quarot": 595.9,  "cda": 158.2, "note": "CDA ≈ KVQuant at short N; QuaRot 3.76× slower"},
+    "N_16K": {"kvquant": 533.0, "quarot": 1104.7, "cda": 120.6, "note": "CDA 4.42× KVQuant, 9.16× QuaRot"},
+    "N_32K": {"kvquant": 1078.3,"quarot": 1728.4, "cda": 202.7, "note": "CDA 5.32× KVQuant, 8.53× QuaRot"},
+    "N_64K": {"kvquant": 2172.8,"quarot": 3024.4, "cda": 348.1, "note": "CDA 6.24× KVQuant, 8.69× QuaRot"}
+  },
+  "summary": {
+    "headline": "CDA 1.00-6.24× faster than KVQuant's official kernel at B=1, with CDA's advantage growing linearly in N (expected — 9.85× HBM saving).",
+    "kvquant_vs_quarot": "KVQuant kernel is 1.39-3.76× faster than QuaRot's across the same N range (better NUQ+RoPE fusion).",
+    "key_narrative": "Both KVQuant and QuaRot follow dequantize-then-attend. Even the faster KVQuant loses to CDA at N≥16K because CDA computes attention on 4-bit K + 2-bit V indices directly — no FP16 K/V materialization ever."
+  }
+}

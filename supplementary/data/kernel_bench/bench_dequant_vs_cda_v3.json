@@ -1,0 +1,58 @@
+[
+  {
+    "B": 1,
+    "N": 4096,
+    "tile_N": 256,
+    "cda_v3_us": 45.1,
+    "dequant_fa2_us": 891.9,
+    "speedup": 19.8
+  },
+  {
+    "B": 1,
+    "N": 8192,
+    "tile_N": 256,
+    "cda_v3_us": 68.6,
+    "dequant_fa2_us": 1696.7,
+    "speedup": 24.73
+  },
+  {
+    "B": 1,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_v3_us": 156.7,
+    "dequant_fa2_us": 6564.9,
+    "speedup": 41.89
+  },
+  {
+    "B": 4,
+    "N": 8192,
+    "tile_N": 256,
+    "cda_v3_us": 138.0,
+    "dequant_fa2_us": 6431.1,
+    "speedup": 46.6
+  },
+  {
+    "B": 4,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_v3_us": 435.2,
+    "dequant_fa2_us": 25662.5,
+    "speedup": 58.97
+  },
+  {
+    "B": 16,
+    "N": 8192,
+    "tile_N": 256,
+    "cda_v3_us": 422.9,
+    "dequant_fa2_us": 25527.8,
+    "speedup": 60.36
+  },
+  {
+    "B": 16,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_v3_us": 1782.3,
+    "dequant_fa2_us": 102754.2,
+    "speedup": 57.65
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "backend": "CDA",
+    "B": 1,
+    "N": 130752,
+    "ok": true,
+    "tok_per_s": 16.7,
+    "per_req_tok_ms": 60.01,
+    "elapsed_ms": 3840.0
+  },
+  {
+    "backend": "CDA",
+    "B": 2,
+    "N": 130752,
+    "ok": true,
+    "tok_per_s": 17.6,
+    "per_req_tok_ms": 113.95,
+    "elapsed_ms": 7292.0
+  },
+  {
+    "backend": "CDA",
+    "B": 4,
+    "N": 130752,
+    "ok": true,
+    "tok_per_s": 21.6,
+    "per_req_tok_ms": 185.28,
+    "elapsed_ms": 11858.0
+  },
+  {
+    "backend": "CDA",
+    "B": 8,
+    "N": 130752,
+    "ok": true,
+    "tok_per_s": 0.8,
+    "per_req_tok_ms": 10245.08,
+    "elapsed_ms": 655685.0
+  }
+]

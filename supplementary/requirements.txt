@@ -1,0 +1,18 @@
+torch==2.10.0
+# NB: must be the +cu128 build — exact wheel is arch-specific. Install via:
+#   pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu128
+
+transformers==4.57.6
+accelerate
+datasets
+
+vllm==0.19.0
+flashinfer-python==0.6.6
+
+pynvml>=11.0          # for energy bench (App H)
+numpy
+pandas
+matplotlib            # for figure generators
+
+# lm-evaluation-harness (for RULER App C; install from source)
+# pip install git+https://github.com/EleutherAI/lm-evaluation-harness@main

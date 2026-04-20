@@ -1,0 +1,10 @@
+{
+  "backend": "FA2",
+  "gpu_memory_utilization": 0.5,
+  "max_model_len_tested": 131072,
+  "ok": false,
+  "error": "Engine core initialization failed. See root cause above. Failed core proc(s): {}",
+  "num_gpu_blocks": null,
+  "block_size_tokens": null,
+  "max_context_capacity": null
+}
