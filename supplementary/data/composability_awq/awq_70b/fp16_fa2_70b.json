@@ -1,0 +1,13 @@
+{
+  "weights": "FP16",
+  "attn": "FA2",
+  "size": "70b",
+  "model_id": "meta-llama/Llama-3.1-70B-Instruct",
+  "quantization": null,
+  "tensor_parallel_size": 4,
+  "max_ctx": 4096,
+  "stride": 64,
+  "n_pos": 63,
+  "total_tokens_scored": 257985,
+  "ppl": 3.5941577397734017
+}

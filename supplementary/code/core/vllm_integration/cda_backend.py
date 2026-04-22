@@ -225,7 +225,27 @@ class CDAAttentionMetadataBuilder(AttentionMetadataBuilder[CDAAttentionMetadata]
     # replay. PIECEWISE is enough to get MLP + norms + sampler fusion
     # wins without the full-graph correctness risk; revisit once the
     # kernel wrapper is reworked to accept pre-allocated scratch buffers.
-    _cudagraph_support: ClassVar[AttentionCGSupport] = AttentionCGSupport.NEVER
+    #
+    # Experimental toggle: ``CDA_ENABLE_CUDAGRAPH=1`` switches the backend
+    # to UNIFORM_SINGLE_TOKEN_DECODE. Default stays at NEVER so existing
+    # benchmarks are unaffected.
+    #
+    # Status (2026-04-21 smoke test on L3-8B, single A6000): FAIL — graph
+    # mode produced gibberish ("thefirst, thefirst, thefirst"). Root cause:
+    # ``cda_decode_full_hmma{_v3,_g8}`` still calls ``at::matmul(...).
+    # contiguous()`` (cuBLAS workspace) + ``query.to(torch::kFloat)`` and
+    # ``torch::empty({B, H_q, num_splits, D})`` *inside* each forward —
+    # these per-call allocations are not managed by the graph memory pool,
+    # so replays read stale/wrong addresses. A proper fix requires the
+    # kernel binding to accept pre-allocated scratch buffers; until then
+    # leave this flag OFF.
+    import os as _cda_os
+    _cudagraph_support: ClassVar[AttentionCGSupport] = (
+        AttentionCGSupport.UNIFORM_SINGLE_TOKEN_DECODE
+        if _cda_os.environ.get("CDA_ENABLE_CUDAGRAPH") == "1"
+        else AttentionCGSupport.NEVER
+    )
+    del _cda_os
 
     def __init__(
         self,
@@ -447,6 +467,15 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
         # L1 fused decode — single C++ dispatch for Q_rot + HMMA + reduce+rot+cast.
         # Opt-in default ON; disable with CDA_DISABLE_FUSED_DECODE=1 for A/B.
         self._use_fused_decode = (_os.environ.get("CDA_DISABLE_FUSED_DECODE") != "1")
+        # Graph-safe path: when CDA_ENABLE_CUDAGRAPH=1 we pre-allocate the
+        # attention scratch buffers here and dispatch to ``*_graphable``
+        # entry points. Sizes cover vLLM v1 decode capture range (max batch
+        # CDA_GRAPH_MAX_B, max num_splits FR_MAX_SPLITS=128). Shape contract
+        # asserted by the kernel. Scratch is SHARED across all layers on the
+        # same (device, H_q) key — one copy per TP rank, not 80×.
+        self._use_graphable = (_os.environ.get("CDA_ENABLE_CUDAGRAPH") == "1")
+        self._graph_max_B = int(_os.environ.get("CDA_GRAPH_MAX_B", "256"))
+        self._graph_max_splits = int(_os.environ.get("CDA_GRAPH_MAX_SPLITS", "128"))
         # Diagnostic timing (profile B): collect per-call GPU time for
         # do_kv_cache_update and _forward_decode so we can attribute the vLLM
         # E2E gap against isolated kernel measurements. Enable with
@@ -658,12 +687,26 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
           fp16 K/V before SDPA.
         """
         import torch.nn.functional as F
+        import os as _os_pf
         cu = attn_metadata.query_start_loc.tolist()
         seq_lens = attn_metadata.seq_lens.tolist()
         scale = self.scale
         H_q = self.num_heads
         D = self.head_size
         group = self.group_size
+
+        # Optional: batch all per-request past-dequantise calls into a single
+        # compressor.dequantize() invocation. Gated on ``CDA_PREFILL_BATCHED=1``
+        # so the default Python-loop path is preserved for backward compat.
+        # Expected speedup: ~1 ms/layer dispatch overhead saved on 70B TP=4
+        # chunked prefill (num_reqs=15) — larger tensor amortises codebook
+        # lookup + inverse-Hadamard matmul launch cost.
+        use_batched_dequant = _os_pf.environ.get("CDA_PREFILL_BATCHED") == "1"
+        past_dequant_cache = None
+        if use_batched_dequant and any(seq_lens[b] - (cu[b+1] - cu[b]) > 0
+                                        for b in range(attn_metadata.num_reqs)):
+            past_dequant_cache = self._dequantize_past_batched(
+                kv_cache, attn_metadata, cu, seq_lens)
 
         for b in range(attn_metadata.num_reqs):
             s, e = cu[b], cu[b + 1]
@@ -678,9 +721,12 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
             v_new = value[s:e].transpose(0, 1)
 
             if past_len > 0:
-                # Dequantise past tokens from paged CDA cache.
-                k_past, v_past = self._dequantize_past(
-                    kv_cache, attn_metadata.block_table[b], past_len)
+                if past_dequant_cache is not None:
+                    k_past, v_past = past_dequant_cache[b]
+                else:
+                    # Dequantise past tokens from paged CDA cache.
+                    k_past, v_past = self._dequantize_past(
+                        kv_cache, attn_metadata.block_table[b], past_len)
                 # _dequantize_past returns fp32; cast to match fresh fp16.
                 k_full = torch.cat([k_past.to(q_b.dtype), k_new], dim=1)
                 v_full = torch.cat([v_past.to(q_b.dtype), v_new], dim=1)
@@ -711,6 +757,116 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
                 )[0].transpose(0, 1)
             _copy_out(output, s, e, out_b, H_q, D)
         return output
+
+    # ---- Shared graph-safe scratch pool ---------------------------------
+    # Class-level dict keyed by (device_str, H_q, D). Re-used across all 80+
+    # layers of a single TP rank so memory cost is one copy per rank, not
+    # per-layer. Allocated at ``self._graph_max_B``/``self._graph_max_splits``
+    # on first access; the kernel's graphable variant uses ``narrow`` to
+    # slice the actual (B, num_splits) sub-view.
+    _shared_graph_scratch: ClassVar[dict] = {}
+
+    def _get_graph_scratch(self, H_q, D, device):
+        key = (str(device), int(H_q), int(D))
+        entry = CDAAttentionImpl._shared_graph_scratch.get(key)
+        if entry is not None:
+            return entry
+        max_B = self._graph_max_B
+        max_splits = self._graph_max_splits
+        entry = {
+            "query_fp32": torch.empty(max_B, H_q, D, device=device, dtype=torch.float32),
+            "Q_rot":      torch.empty(max_B, H_q, D, device=device, dtype=torch.float32),
+            "partial":    torch.empty(max_B, H_q, max_splits, D, device=device, dtype=torch.float32),
+            "m":          torch.empty(max_B, H_q, max_splits, device=device, dtype=torch.float32),
+            "l":          torch.empty(max_B, H_q, max_splits, device=device, dtype=torch.float32),
+            "max_B": max_B, "max_splits": max_splits,
+        }
+        CDAAttentionImpl._shared_graph_scratch[key] = entry
+        return entry
+
+    # ---- Batched dequantise for multiple requests (chunked prefill) -----
+    def _dequantize_past_batched(self, kv_cache, attn_metadata, cu, seq_lens):
+        """Dequantise past K/V for every request whose ``past_len > 0`` in a
+        single call to the compressor (instead of one call per request).
+
+        Returns a dict ``{b: (K_past, V_past)}`` with fp32 tensors shaped
+        ``(H_kv, past_len_b, D)`` identical to :meth:`_dequantize_past`'s
+        per-request output.
+
+        Strategy: collect all slot_ids + past_lens into a flat index tensor,
+        run one :meth:`index_select` over the paged cache, then one batched
+        codebook lookup + inverse-rotation for K and for V. Result is split
+        back per-request via cumulative offsets.
+        """
+        num_blocks, block_size, H_kv, slot_width = kv_cache.shape
+        D = self.head_size
+
+        num_reqs = attn_metadata.num_reqs
+        reqs_with_past = []
+        past_lens = []
+        for b in range(num_reqs):
+            pl = seq_lens[b] - (cu[b + 1] - cu[b])
+            if pl > 0:
+                reqs_with_past.append(b)
+                past_lens.append(pl)
+        if not reqs_with_past:
+            return {}
+
+        device = kv_cache.device
+        # Build one concatenated slot_ids tensor covering every past token
+        # across every request. Block-table indexing is done per-request
+        # (block_table[b] is a row vector of block indices).
+        slot_list = []
+        for b, pl in zip(reqs_with_past, past_lens):
+            num_blk = (pl + block_size - 1) // block_size
+            req_blocks = attn_metadata.block_table[b][:num_blk].to(torch.long)
+            req_slots = (req_blocks.unsqueeze(1) * block_size +
+                          torch.arange(block_size, device=device)
+                          ).reshape(-1)[:pl].to(torch.long)
+            slot_list.append(req_slots)
+        slot_ids_cat = torch.cat(slot_list, dim=0)                          # (total_past,)
+        total_past = slot_ids_cat.numel()
+
+        flat = kv_cache.view(num_blocks * block_size, H_kv,
+                               slot_width).index_select(0, slot_ids_cat)      # (total_past, H_kv, 104)
+
+        # Extract K/V bytes + norms once for the whole stack.
+        from core.compression import CompressedTensor
+        pK_bytes = flat[:, :, _K_OFFSET:_K_OFFSET + _K_NBYTES].reshape(
+            total_past * H_kv, _K_NBYTES).contiguous()
+        pV_bytes = flat[:, :, _V_OFFSET:_V_OFFSET + _V_NBYTES].reshape(
+            total_past * H_kv, _V_NBYTES).contiguous()
+        nK = flat[:, :, _NORM_K_OFFSET:_NORM_K_OFFSET + 4].contiguous() \
+                .view(torch.float32).reshape(total_past * H_kv).contiguous()
+        nV = flat[:, :, _NORM_V_OFFSET:_NORM_V_OFFSET + 4].contiguous() \
+                .view(torch.float32).reshape(total_past * H_kv).contiguous()
+
+        cK = CompressedTensor(
+            indices=pK_bytes, norms=nK, bit_width=4,
+            shape=torch.Size([total_past * H_kv, D]),
+            dtype=torch.float16, device=device,
+            payload=None, gpu_resident=True, deflated=False,
+        )
+        cV = CompressedTensor(
+            indices=pV_bytes, norms=nV, bit_width=2,
+            shape=torch.Size([total_past * H_kv, D]),
+            dtype=torch.float16, device=device,
+            payload=None, gpu_resident=True, deflated=False,
+        )
+        K_all = self._compressor_k.dequantize(cK).to(torch.float32)           # (total_past * H_kv, D)
+        V_all = self._compressor_v.dequantize(cV).to(torch.float32)
+        K_all = K_all.view(total_past, H_kv, D)                                # (total_past, H_kv, D)
+        V_all = V_all.view(total_past, H_kv, D)
+
+        # Split back per-request into (H_kv, past_len_b, D).
+        out: dict = {}
+        offset = 0
+        for b, pl in zip(reqs_with_past, past_lens):
+            K_req = K_all[offset:offset + pl].transpose(0, 1).contiguous()
+            V_req = V_all[offset:offset + pl].transpose(0, 1).contiguous()
+            out[b] = (K_req, V_req)
+            offset += pl
+        return out
 
     # ---- Dequantise past tokens from paged cache (chunked prefill) ------
     def _dequantize_past(self, kv_cache, block_table_row, past_len):
@@ -774,6 +930,8 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
                 CDAAttentionImpl._profile_dump()
             return ret
         return self._forward_decode_inner(query, kv_cache, output, attn_metadata)
+
+    _cda_debug_step = [0]
 
     def _forward_decode_inner(self, query, kv_cache, output, attn_metadata):
         """All-requests-in-one kernel call via
@@ -862,14 +1020,102 @@ class CDAAttentionImpl(AttentionImpl[CDAAttentionMetadata]):
         use_fused_decode = (use_fused_tail
                              and self._use_fused_decode
                              and query.dtype == torch.float16)
+        # Graph-safe path override: when CDA_ENABLE_CUDAGRAPH=1, FORCE the
+        # fused_decode branch for group_size=4 even at short contexts —
+        # otherwise the non-fused ``cuda_hw_attention_flash_paged_batched``
+        # path is taken, and that kernel's internal ``torch::empty``
+        # allocations invalidate CUDA Graph capture. We already have a
+        # graphable v3 kernel; using it unconditionally for group_size=4
+        # under graphable mode preserves correctness across seq lengths.
+        if (self._use_graphable and self.group_size == 4
+                and query.dtype == torch.float16 and output.dim() == 3):
+            use_fused_decode = True
 
         if use_fused_decode:
+            if self._use_graphable:
+                scratch = self._get_graph_scratch(
+                    self.num_heads, self.head_size, query.device)
+                B_actual = query.shape[0]
+                if B_actual > scratch["max_B"]:
+                    raise RuntimeError(
+                        f"CDA graphable: B={B_actual} exceeds CDA_GRAPH_MAX_B"
+                        f"={scratch['max_B']}. Raise the env var before boot.")
+                Q_rot_view = scratch["Q_rot"].narrow(0, 0, B_actual)
+                q_fp32_view = scratch["query_fp32"].narrow(0, 0, B_actual)
+                q_fp32_view.copy_(query)
+                torch.matmul(q_fp32_view, self._rotation, out=Q_rot_view)
+                from core.cda_attn import cda_decode_full_hmma_v3_graphable
+                fixed_max_seq = tile_N * scratch["max_splits"]
+                cda_decode_full_hmma_v3_graphable(
+                    query, flat_cache, block_table, seq_lens,
+                    self._codebook_k, self._codebook_v,
+                    self._rotation, self._rotation_fp16, output,
+                    scratch["query_fp32"], scratch["Q_rot"],
+                    scratch["partial"], scratch["m"], scratch["l"],
+                    self.group_size, block_size, tile_N, fixed_max_seq, self.scale,
+                )
+                return output
             from core.cda_attn import cda_decode_full_hmma
             cda_decode_full_hmma(
                 query, flat_cache, block_table, seq_lens,
                 self._codebook_k, self._codebook_v,
                 self._rotation, self._rotation_fp16, output,
                 self.group_size, block_size, tile_N, max_seq_bound, self.scale,
+            )
+            return output
+
+        # HMMA g8 fast path for Llama-2/3-70B (group_size=8). Same fusion
+        # semantics as cda_decode_full_hmma but with FD_GS=8. Gated on fp16
+        # query + 3D output (vLLM decode invariant) so we fall through to
+        # the generic flash path when shape prerequisites are not met.
+        # Under graphable mode, drop the max_seq_bound>=4096 gate so the
+        # capture warmup at small seq lengths still hits the graphable
+        # kernel (the non-graphable fallback has torch::empty → invalidates
+        # capture; see v3 fix above).
+        _g8_min_seq = 0 if self._use_graphable else 4096
+        if (self.group_size == 8
+                and self._use_hmma
+                and query.dtype == torch.float16
+                and output.dim() == 3
+                and max_seq_bound >= _g8_min_seq):
+            from core.cda_attn import cda_decode_full_hmma_g8, choose_tile_n_hmma
+            B_local = query.shape[0]
+            tile_g8 = choose_tile_n_hmma(max_seq_bound, B_local)
+            # HMMA kernel hard-caps num_splits at 128; max_seq_bound can
+            # exceed choose_tile's lookup thresholds due to vLLM block-table
+            # padding (e.g. 32K+128+pad → num_splits=129 at tile=256).
+            while tile_g8 < 4096 and (max_seq_bound + tile_g8 - 1) // tile_g8 > 128:
+                tile_g8 *= 2
+            if self._use_graphable:
+                scratch = self._get_graph_scratch(
+                    self.num_heads, self.head_size, query.device)
+                B_actual = query.shape[0]
+                if B_actual > scratch["max_B"]:
+                    raise RuntimeError(
+                        f"CDA graphable: B={B_actual} exceeds CDA_GRAPH_MAX_B"
+                        f"={scratch['max_B']}. Raise the env var before boot.")
+                # Q rotation — graph-safe via Python-side torch.matmul with
+                # out= (see v3 graphable branch for rationale).
+                Q_rot_view = scratch["Q_rot"].narrow(0, 0, B_actual)
+                q_fp32_view = scratch["query_fp32"].narrow(0, 0, B_actual)
+                q_fp32_view.copy_(query)
+                torch.matmul(q_fp32_view, self._rotation, out=Q_rot_view)
+                from core.cda_attn import cda_decode_full_hmma_g8_graphable
+                fixed_max_seq = tile_g8 * scratch["max_splits"]
+                cda_decode_full_hmma_g8_graphable(
+                    query, flat_cache, block_table, seq_lens,
+                    self._codebook_k, self._codebook_v,
+                    self._rotation, self._rotation_fp16, output,
+                    scratch["query_fp32"], scratch["Q_rot"],
+                    scratch["partial"], scratch["m"], scratch["l"],
+                    self.group_size, block_size, tile_g8, fixed_max_seq, self.scale,
+                )
+                return output
+            cda_decode_full_hmma_g8(
+                query, flat_cache, block_table, seq_lens,
+                self._codebook_k, self._codebook_v,
+                self._rotation, self._rotation_fp16, output,
+                self.group_size, block_size, tile_g8, max_seq_bound, self.scale,
             )
             return output
 

@@ -5,7 +5,7 @@
   "shape_note": "QuaRot kernel is MHA-only (no GQA). We bench both at their native shapes.",
   "quarot_shape": "H_q=32 H_kv=32 D=128 (Llama-2-7B MHA). Int4 K + Int4 V with per-token asymmetric scale/zero, fp16 Hadamard rotation.",
   "cda_shape": "H_q=32 H_kv=8 D=128 (Llama-3.1-8B GQA, group_size=4). K4V2 codebook + fp32 norms.",
-  "quarot_impl": "/home/jmw/ing/research/REF/QuaRot/benchmarks/qattention_benchmark.py (MultiLayerPagedKVCache4Bit, batch_decode_i4 CUDA kernel)",
+  "quarot_impl": "<PATH_REDACTED> (MultiLayerPagedKVCache4Bit, batch_decode_i4 CUDA kernel)",
   "cda_impl": "torch.ops._C.cda_decode_full_hmma (register-fragment synthesis, no fp16 K/V materialization)",
   "kv_memory_per_token": {
     "quarot_int4_mha_32heads": "32 heads * (4-bit K + 4-bit V) * 128 D + 4*(fp16 scale+zero K,V) = 1024 B/token",

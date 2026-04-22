@@ -1,0 +1,40 @@
+{
+  "backend": "CDA",
+  "B": 16,
+  "N": 32768,
+  "output_len": 128,
+  "gpu_id": 1,
+  "iters": 3,
+  "per_round": [
+    {
+      "iter": 0,
+      "elapsed_s": 16.771634250879288,
+      "energy_j": 4864.631804318279,
+      "avg_power_w": 293.08706024096443,
+      "n_samples": 332,
+      "total_tokens": 2048,
+      "mj_per_tok": 2375.3084982022847
+    },
+    {
+      "iter": 1,
+      "elapsed_s": 17.07583710551262,
+      "energy_j": 5009.6364465457345,
+      "avg_power_w": 293.7763079178887,
+      "n_samples": 341,
+      "total_tokens": 2048,
+      "mj_per_tok": 2446.1115461649097
+    },
+    {
+      "iter": 2,
+      "elapsed_s": 16.782684560865164,
+      "energy_j": 4901.581068627023,
+      "avg_power_w": 292.5543402985076,
+      "n_samples": 335,
+      "total_tokens": 2048,
+      "mj_per_tok": 2393.3501311655386
+    }
+  ],
+  "mj_per_tok_mean": 2404.923391844244,
+  "mj_per_tok_min": 2375.3084982022847,
+  "mj_per_tok_max": 2446.1115461649097
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "backend": "FLASH_ATTN",
+    "B": 1,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 3.221074104309082,
+    "total_gen_tokens": 128,
+    "tok_per_s": 39.738297181292545,
+    "ok": true
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 4,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 4.650782346725464,
+    "total_gen_tokens": 512,
+    "tok_per_s": 110.08900478012919,
+    "ok": true
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 8,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 5.959709167480469,
+    "total_gen_tokens": 1024,
+    "tok_per_s": 171.82046492931585,
+    "ok": true
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 16,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 60.110515117645264,
+    "total_gen_tokens": 2048,
+    "tok_per_s": 34.070578100882315,
+    "ok": true
+  },
+  {
+    "backend": "FLASH_ATTN",
+    "B": 32,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 118.26488876342773,
+    "total_gen_tokens": 4096,
+    "tok_per_s": 34.63411704714382,
+    "ok": true
+  }
+]

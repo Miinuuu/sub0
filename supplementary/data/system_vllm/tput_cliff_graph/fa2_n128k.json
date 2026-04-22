@@ -1,0 +1,12 @@
+[
+  {
+    "backend": "FLASH_ATTN",
+    "B": 2,
+    "N": 130944,
+    "gen_per_req": 128,
+    "duration_s": 109.25792002677917,
+    "total_gen_tokens": 256,
+    "tok_per_s": 2.3430795674789917,
+    "ok": true
+  }
+]

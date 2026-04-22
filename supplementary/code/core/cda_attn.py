@@ -112,14 +112,17 @@ _hmma_mod = None
 
 
 def _get_hmma():
-    """Return the HMMA kernel extension (loads from prebuilt_hmma/)."""
+    """Return the HMMA production kernel extension (pre-built .so loader).
+
+    Supplementary ships pre-built ``.so`` binaries only; see
+    ``core/_load_prebuilt.py``. For rebuilds on other architectures,
+    contact the authors.
+    """
     global _hmma_mod
     if _hmma_mod is None:
         from . import _load_prebuilt
         _hmma_mod = _load_prebuilt.load_hmma()
     return _hmma_mod
-
-
 
 
 # v2 (V-phase SMEM staging) removed 2026-04-20 as negative result: the
@@ -146,8 +149,6 @@ def _get_hmma_v3():
         from . import _load_prebuilt
         _hmma_v3_mod = _load_prebuilt.load_hmma_v3()
     return _hmma_v3_mod
-
-
 
 
 def cda_decode_full_hmma_v3(
@@ -208,8 +209,6 @@ def _get_hmma_g8():
     return _hmma_g8_mod
 
 
-
-
 def cda_decode_full_hmma_g8(
     query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
     rotation_fp32, rotation_fp16, output,
@@ -254,6 +253,69 @@ def cda_decode_full_hmma_auto(
         "docs/HMMA_OPTIMIZATION_PLAN.md §priority-4.")
 
 
+def cda_decode_full_hmma_v3_graphable(
+    query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+    rotation_fp32, rotation_fp16, output,
+    scratch_query_fp32, scratch_Q_rot, scratch_partial, scratch_m, scratch_l,
+    group_size, block_size, tile_N, max_seq_len, scale,
+):
+    """Graph-safe variant of :func:`cda_decode_full_hmma_v3`. Caller pre-
+    allocates scratch so CUDA Graph capture records stable addresses. See
+    the kernel-side doc in ``core/_hmma_production_v3.cu`` for the shape
+    contract.
+    """
+    _get_hmma_v3().cda_decode_full_hmma_v3_graphable(
+        query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+        rotation_fp32, rotation_fp16, output,
+        scratch_query_fp32, scratch_Q_rot,
+        scratch_partial, scratch_m, scratch_l,
+        group_size, block_size, tile_N, max_seq_len, scale,
+    )
+
+
+def cda_decode_full_hmma_g8_graphable(
+    query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+    rotation_fp32, rotation_fp16, output,
+    scratch_query_fp32, scratch_Q_rot, scratch_partial, scratch_m, scratch_l,
+    group_size, block_size, tile_N, max_seq_len, scale,
+):
+    """Graph-safe variant of :func:`cda_decode_full_hmma_g8`. See v3 doc."""
+    _get_hmma_g8().cda_decode_full_hmma_g8_graphable(
+        query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+        rotation_fp32, rotation_fp16, output,
+        scratch_query_fp32, scratch_Q_rot,
+        scratch_partial, scratch_m, scratch_l,
+        group_size, block_size, tile_N, max_seq_len, scale,
+    )
+
+
+def cda_decode_full_hmma_graphable_auto(
+    query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+    rotation_fp32, rotation_fp16, output,
+    scratch_query_fp32, scratch_Q_rot, scratch_partial, scratch_m, scratch_l,
+    group_size, block_size, tile_N, max_seq_len, scale,
+):
+    """Auto-dispatch graph-safe HMMA by group_size (mirrors the non-graph
+    :func:`cda_decode_full_hmma_auto`)."""
+    if group_size == 4:
+        return cda_decode_full_hmma_v3_graphable(
+            query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+            rotation_fp32, rotation_fp16, output,
+            scratch_query_fp32, scratch_Q_rot,
+            scratch_partial, scratch_m, scratch_l,
+            group_size, block_size, tile_N, max_seq_len, scale)
+    if group_size == 8:
+        return cda_decode_full_hmma_g8_graphable(
+            query_fp16, kv_cache, block_tables, seq_lens, cb_k, cb_v,
+            rotation_fp32, rotation_fp16, output,
+            scratch_query_fp32, scratch_Q_rot,
+            scratch_partial, scratch_m, scratch_l,
+            group_size, block_size, tile_N, max_seq_len, scale)
+    raise NotImplementedError(
+        f"HMMA graphable kernel supports group_size ∈ {{4, 8}}, got "
+        f"{group_size}.")
+
+
 def cda_flash_split_k4v2_gqa_paged_batched_coop_hmma(
     Q, kv_cache, block_tables, seq_lens, cb_k, cb_v,
     group_size, block_size, tile_N, max_seq_len, scale,
@@ -275,7 +337,10 @@ _fused_update_mod = None
 
 
 def _get_fused_update():
-    """Return the fused KV-cache-update kernel (loads from prebuilt_hmma/)."""
+    """Return the fused quantize+scatter kernel (pre-built .so loader).
+    Replaces the ~15-kernel Python pipeline in do_kv_cache_update with one
+    CUDA launch per call.
+    """
     global _fused_update_mod
     if _fused_update_mod is None:
         from . import _load_prebuilt
@@ -283,20 +348,20 @@ def _get_fused_update():
     return _fused_update_mod
 
 
-
-
 _fused_reduce_rot_mod = None
 
 
 def _get_fused_reduce_rot():
-    """Return the fused reduce+rotation+fp16 kernel (loads from prebuilt_hmma/)."""
+    """Return the fused reduce+rotation+fp16 kernel (pre-built .so loader).
+    Eliminates 3 kernel launches per layer (split-K reduce → matmul(out,
+    rotation) → .to(fp16)) by fusing them into a single block-per-head
+    kernel.
+    """
     global _fused_reduce_rot_mod
     if _fused_reduce_rot_mod is None:
         from . import _load_prebuilt
         _fused_reduce_rot_mod = _load_prebuilt.load_fused_reduce_rot()
     return _fused_reduce_rot_mod
-
-
 
 
 def cda_fused_reduce_rot_cast(

@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def main():
-    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--weights", choices=("FP16", "AWQ"), required=True)
@@ -24,6 +24,13 @@ def main():
     ap.add_argument("--max-ctx", type=int, default=4096)
     ap.add_argument("--stride", type=int, default=64)
     ap.add_argument("--n-pos", type=int, default=63)
+    ap.add_argument(
+        "--size", choices=("8b", "70b"), default="8b",
+        help="Model scale: 8b (single-GPU, TP=1, gpu-util=0.88) or "
+             "70b (TP=4, gpu-util=0.85) — 70b AWQ weights downloaded to "
+             "$HF_HOME/hub/models--hugging-quants--Meta-Llama-3.1-70B-"
+             "Instruct-AWQ-INT4")
+    ap.add_argument("--tensor-parallel-size", type=int, default=None)
     args = ap.parse_args()
 
     if args.attn == "CDA":
@@ -32,19 +39,34 @@ def main():
     import torch
     from vllm import LLM, SamplingParams
 
-    # Model selection
-    if args.weights == "FP16":
-        model_id = "meta-llama/Llama-3.1-8B-Instruct"
-        quant = None
-    else:
-        model_id = "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
-        quant = "awq_marlin"
+    # Model selection — parametrised on --size so the same harness drives
+    # the 8B (TP=1) composability confirmed in App.~\ref{app:awq} and the
+    # 70B (TP=4) extension requested for the NeurIPS camera-ready delta.
+    if args.size == "70b":
+        if args.weights == "FP16":
+            model_id = "meta-llama/Llama-3.1-70B-Instruct"
+            quant = None
+        else:
+            model_id = "hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4"
+            quant = "awq_marlin"
+        tp = args.tensor_parallel_size or 4
+        gpu_util = 0.85
+    else:  # 8b
+        if args.weights == "FP16":
+            model_id = "meta-llama/Llama-3.1-8B-Instruct"
+            quant = None
+        else:
+            model_id = "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+            quant = "awq_marlin"
+        tp = args.tensor_parallel_size or 1
+        gpu_util = 0.88
 
     kw = dict(
         model=model_id,
         max_model_len=args.max_ctx + 8,
         enforce_eager=True,
-        gpu_memory_utilization=0.88,
+        gpu_memory_utilization=gpu_util,
+        tensor_parallel_size=tp,
         dtype="float16",
     )
     if quant:
@@ -107,8 +129,10 @@ def main():
     res = {
         "weights": args.weights,
         "attn": args.attn,
+        "size": args.size,
         "model_id": model_id,
         "quantization": quant,
+        "tensor_parallel_size": tp,
         "max_ctx": args.max_ctx,
         "stride": args.stride,
         "n_pos": len(positions),

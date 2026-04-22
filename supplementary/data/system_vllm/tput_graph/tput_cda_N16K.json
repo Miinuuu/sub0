@@ -1,0 +1,52 @@
+[
+  {
+    "backend": "CDA",
+    "B": 1,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 3.387796401977539,
+    "total_gen_tokens": 128,
+    "tok_per_s": 37.78267192363841,
+    "ok": true
+  },
+  {
+    "backend": "CDA",
+    "B": 4,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 4.744346618652344,
+    "total_gen_tokens": 512,
+    "tok_per_s": 107.91791602811605,
+    "ok": true
+  },
+  {
+    "backend": "CDA",
+    "B": 8,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 7.165557146072388,
+    "total_gen_tokens": 1024,
+    "tok_per_s": 142.90584515975547,
+    "ok": true
+  },
+  {
+    "backend": "CDA",
+    "B": 16,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 9.547643184661865,
+    "total_gen_tokens": 2048,
+    "tok_per_s": 214.50319836942367,
+    "ok": true
+  },
+  {
+    "backend": "CDA",
+    "B": 32,
+    "N": 16384,
+    "gen_per_req": 128,
+    "duration_s": 16.38708758354187,
+    "total_gen_tokens": 4096,
+    "tok_per_s": 249.95289609080731,
+    "ok": true
+  }
+]

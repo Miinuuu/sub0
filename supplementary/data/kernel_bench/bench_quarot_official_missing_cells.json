@@ -1,0 +1,26 @@
+[
+  {
+    "B": 16,
+    "N": 65536,
+    "fp16_us": 28671.5,
+    "int4_had_us": 11573.7,
+    "int4_vs_fp16": 2.48
+  },
+  {
+    "B": 16,
+    "N": 131072,
+    "fp16_us": 56304.1,
+    "int4_had_us": 20812.7,
+    "int4_vs_fp16": 2.71
+  },
+  {
+    "B": 64,
+    "N": 65536,
+    "error": "CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 47.41 GiB of which 47.04 GiB is free. Including non-PyTorch memory, this process has 304.00 MiB memory in use. Of the all"
+  },
+  {
+    "B": 64,
+    "N": 131072,
+    "error": "CUDA out of memory. Tried to allocate 128.00 GiB. GPU 0 has a total capacity of 47.41 GiB of which 47.04 GiB is free. Including non-PyTorch memory, this process has 304.00 MiB memory in use. Of the al"
+  }
+]

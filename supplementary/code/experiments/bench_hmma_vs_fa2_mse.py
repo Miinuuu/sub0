@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 def main():
-    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", type=Path, default=Path("runs/hmma_vs_fa2_mse.json"))

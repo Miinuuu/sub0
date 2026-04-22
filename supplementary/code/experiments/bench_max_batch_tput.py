@@ -5,7 +5,7 @@ tok/s even if per-request latency is higher.
 """
 import os, sys, time, argparse, gc
 import torch
-REPO = "/home/jmw/ing/research/cda"
+REPO = str(Path(__file__).resolve().parents[1])
 sys.path.insert(0, REPO)
 
 ap = argparse.ArgumentParser()

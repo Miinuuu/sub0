@@ -15,7 +15,6 @@ import time
 from pathlib import Path
 
 import torch
-from torch.utils.cpp_extension import load
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -41,15 +40,9 @@ SCALE = 1.0 / D ** 0.5
 
 
 def _load():
-    return load(
-        name="_hmma_production",
-        sources=[str(REPO / "core" / "_hmma_production.cu")],
-        extra_cflags=["-O3"],
-        extra_cuda_cflags=["-O3", "--use_fast_math",
-                           "-gencode=arch=compute_86,code=sm_86",
-                           "-Xptxas=-v"],
-        verbose=True,
-    )
+    # Supplementary: load pre-built .so (no CUDA source redistributed).
+    from core._load_prebuilt import load_hmma
+    return load_hmma()
 
 
 def _build_cache(B, N, device):

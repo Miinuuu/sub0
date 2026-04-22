@@ -1,0 +1,32 @@
+{
+  "fp16": {
+    "ppl": 6.0645,
+    "n_pos": 20,
+    "time_s": 9.5,
+    "desc": "FP16 baseline"
+  },
+  "cda_k4v4": {
+    "ppl": 6.1339,
+    "n_pos": 20,
+    "time_s": 10.2,
+    "desc": "CDA K4V4 (Lloyd-Max)"
+  },
+  "quarot_k4v4": {
+    "ppl": 6.2093,
+    "n_pos": 20,
+    "time_s": 10.3,
+    "desc": "QuaRot-style K4V4 (RTN)"
+  },
+  "cda_k4v2": {
+    "ppl": 6.1493,
+    "n_pos": 20,
+    "time_s": 10.4,
+    "desc": "CDA K4V2 (Lloyd-Max)"
+  },
+  "quarot_k4v2": {
+    "ppl": 36.1418,
+    "n_pos": 20,
+    "time_s": 10.4,
+    "desc": "QuaRot-style K4V2 (RTN)"
+  }
+}

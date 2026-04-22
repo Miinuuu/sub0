@@ -5,9 +5,9 @@
 # Usage: CUDA_VISIBLE_DEVICES=1 bash experiments/bench_energy_sweep.sh
 
 set -eu
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PY="python"
-OUT="$REPO/data/system_energy"
+OUT="$(cd "$REPO/.." && pwd)/data/system_energy/energy"
 mkdir -p "$OUT"
 
 # Representative (B, N) points covering weight-bound (B=1) and memory-bound (B=16+) regimes.
@@ -30,7 +30,7 @@ for BK in FA2 CDA; do
             continue
         fi
         echo "=== [${BK}] B=$B N=$N ==="
-        $PY $REPO/code/experiments/bench_energy_nvml.py \
+        $PY $REPO/experiments/bench_energy_nvml.py \
             --backend $BK --B $B --N $N --output-len 128 --iters 3 \
             --output $F \
             > $OUT/_log_${BK}_B${B}_N${NK}.txt 2>&1 \

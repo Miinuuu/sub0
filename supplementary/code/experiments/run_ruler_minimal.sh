@@ -11,12 +11,13 @@ set -e
 BACKEND="${BACKEND:-fa2}"
 GPU="${GPU:-0}"
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-OUTPUT_DIR="runs/ruler_min"
-mkdir -p $OUTPUT_DIR
-cd /home/jmw/ing/research/cda
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUTPUT_DIR="$(cd "$REPO/.." && pwd)/data/accuracy_long_context/ruler_min"
+mkdir -p "$OUTPUT_DIR"
+cd "$REPO"
 
-# Ensure ninja + nvcc are on PATH so torch.cpp_extension JIT compile works.
-export PATH="/home/jmw/miniconda3/envs/cda/bin:/usr/local/cuda/bin:$PATH"
+# Ensure nvcc is on PATH.
+export PATH="/usr/local/cuda/bin:$PATH"
 
 # 2 RULER tasks (QA + variable-tracking) — scaling-sensitive subset.
 # This lm_eval build packages 6 ruler tasks (cwe, fwe, qa_hotpot, qa_squad, vt).
@@ -34,7 +35,7 @@ else
   TAG="fa2"
 fi
 
-CUDA_VISIBLE_DEVICES=$GPU /home/jmw/miniconda3/envs/cda/bin/python -m lm_eval --model vllm \
+CUDA_VISIBLE_DEVICES=$GPU python -m lm_eval --model vllm \
   --model_args "pretrained=${MODEL},tensor_parallel_size=1,max_model_len=32768,enforce_eager=True,gpu_memory_utilization=0.70${BACKEND_ARGS}" \
   --tasks "$TASKS" \
   --limit $LIMIT \

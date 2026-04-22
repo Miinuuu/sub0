@@ -12,8 +12,9 @@ set -eu
 
 BACKEND="${1:-FA2}"
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUT_DIR="$REPO/data/system_pareto"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT_DIR="$(cd "$REPO/.." && pwd)/data/system_pareto/pareto"
+mkdir -p "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 cd "$REPO"
 

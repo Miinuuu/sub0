@@ -1,0 +1,50 @@
+[
+  {
+    "B": 1,
+    "N": 4096,
+    "tile_N": 256,
+    "cda_g8_us": 54.3,
+    "dequant_fa2_us": 893.7,
+    "speedup": 16.47
+  },
+  {
+    "B": 1,
+    "N": 8192,
+    "tile_N": 256,
+    "cda_g8_us": 76.8,
+    "dequant_fa2_us": 1695.7,
+    "speedup": 22.08
+  },
+  {
+    "B": 1,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_g8_us": 180.0,
+    "dequant_fa2_us": 6565.9,
+    "speedup": 36.47
+  },
+  {
+    "B": 4,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_g8_us": 548.3,
+    "dequant_fa2_us": 25662.0,
+    "speedup": 46.81
+  },
+  {
+    "B": 16,
+    "N": 8192,
+    "tile_N": 256,
+    "cda_g8_us": 528.2,
+    "dequant_fa2_us": 25533.5,
+    "speedup": 48.34
+  },
+  {
+    "B": 16,
+    "N": 32768,
+    "tile_N": 256,
+    "cda_g8_us": 2209.6,
+    "dequant_fa2_us": 102761.8,
+    "speedup": 46.51
+  }
+]

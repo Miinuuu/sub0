@@ -16,7 +16,7 @@ from pathlib import Path
 from statistics import median
 
 import torch
-sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from core.compression import HadamardQuantCompressor
 from core.cda_attn import (
     cuda_hw_attention_gqa, cuda_hw_attention_flash_gqa,

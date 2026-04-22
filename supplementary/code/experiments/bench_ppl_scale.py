@@ -32,7 +32,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.insert(0, os.path.expanduser("~/ing/research"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, DynamicCache
 
@@ -141,7 +141,7 @@ def run_kivi(model, input_ids, positions, nbits):
 
 def _load_gear_funcs():
     gear_path = os.path.expanduser(
-        "~/ing/research/REF/GEAR/GenerationBench/GenerationTest/GEARLM/"
+        "REF/GEAR/GenerationBench/GenerationTest/GEARLM/"
         "Simulated/compress_function.py"
     )
     if not os.path.exists(gear_path):

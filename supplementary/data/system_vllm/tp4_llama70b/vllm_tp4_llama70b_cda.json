@@ -1,0 +1,29 @@
+{
+  "backend": "cda",
+  "model": "meta-llama/Llama-3.1-70B-Instruct",
+  "tp": 4,
+  "prefill": 8192,
+  "gen": 128,
+  "batch": 1,
+  "tpot_ms_median": 61.23300828039646,
+  "raw": [
+    {
+      "iter": 0,
+      "elapsed_s": 7.840652704238892,
+      "gen_tokens": 128,
+      "tpot_ms_per_token": 61.25509925186634
+    },
+    {
+      "iter": 1,
+      "elapsed_s": 7.837825059890747,
+      "gen_tokens": 128,
+      "tpot_ms_per_token": 61.23300828039646
+    },
+    {
+      "iter": 2,
+      "elapsed_s": 7.837081432342529,
+      "gen_tokens": 128,
+      "tpot_ms_per_token": 61.22719869017601
+    }
+  ]
+}

@@ -25,9 +25,12 @@ pip install git+https://github.com/EleutherAI/lm-evaluation-harness@main
 
 ## 2. Model weights
 
-All experiments use `meta-llama/Llama-3.1-8B-Instruct` (HF Hub) and, for
-Appendix I, `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`. Log in
-with `huggingface-cli login` if you have not already.
+Default model: `meta-llama/Llama-3.1-8B-Instruct` (HF Hub). Appendix
+tables also use `meta-llama/Meta-Llama-3-70B-Instruct`,
+`meta-llama/Llama-2-{7b,13b,70b}-hf`, `Qwen/Qwen2.5-32B`, and
+`mistralai/Mistral-7B-v0.1`. Appendix I uses
+`hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` and a 70B AWQ
+counterpart. Log in with `huggingface-cli login` if you have not already.
 
 ## 3. Path setup
 
@@ -46,15 +49,17 @@ Shell scripts resolve `$REPO` to `supplementary/` automatically.
 
 Verify the pre-built kernels load:
 
-```python
+```bash
 python -c "
 import sys
 from pathlib import Path
 sys.path.insert(0, 'supplementary/code')
-from core.cda_attn import choose_tile_n_hmma
-from core._load_prebuilt import load_hmma_v3
-load_hmma_v3()
-print('OK — HMMA v3 loaded')
+from core._load_prebuilt import load_hmma_v3, load_hmma_g8, load_hmma, load_fused_update, load_fused_reduce_rot
+for fn in (load_hmma, load_hmma_v3, load_hmma_g8, load_fused_update, load_fused_reduce_rot):
+    mod = fn()
+    print(f'  OK — {fn.__name__}() loaded ({mod})')
+from core import cda_attn as _   # triggers _get_gqa() eager load of the flash .so
+print('OK — all 5 HMMA/fused kernels + flash kernels loaded')
 "
 ```
 
@@ -65,7 +70,7 @@ python supplementary/code/experiments/bench_hmma_vs_fa2_mse.py
 ```
 
 Expected runtime: ~3 minutes on a single A6000. Output JSON goes to
-`runs/hmma_vs_fa2_mse.json` (creates the folder on first run).
+`data/misc/hmma_vs_fa2_mse.json` (creates the folder on first run).
 
 ## 5. Reproducing each paper table / figure
 
@@ -75,10 +80,19 @@ See `README.md` for per-appendix commands.
 
 - **`ImportError: Pre-built kernel missing`** — the `.so` file's ABI
   doesn't match your Python / PyTorch. Verify versions with
-  `python -c "import torch; print(torch.__version__)"`.
+  `python -c "import torch; print(torch.__version__)"` (expected
+  `2.10.0+cu128`).
 - **`CUDA error: no kernel image is available for execution`** — your
-  GPU is not sm_86. The bundled `.so` targets A6000 only.
+  GPU is not sm_86. The bundled `.so` targets A6000 only; contact the
+  authors for a sm_80 / sm_89 / sm_90 rebuild.
 - **`ModuleNotFoundError: No module named 'core'`** — set
   `PYTHONPATH=supplementary/code` or run scripts by path (not module).
+- **`undefined symbol: c10_cuda_check_implementation`** — handled
+  internally by `_load_prebuilt._preload_torch_libs()` (forces libc10 /
+  libc10_cuda with RTLD_GLOBAL before dlopening our `.so`). If you still
+  see this, check that PyTorch's `lib/` directory is readable.
 - **vLLM hangs on first run** — vLLM JIT-compiles its own attention
   backends; first startup can take 2–3 minutes.
+- **70B runs require TP=4** — set `CUDA_VISIBLE_DEVICES=0,1,2,3` and
+  pass `tensor_parallel_size=4` to vLLM. Capacity-bound scripts may also
+  need `gpu_memory_utilization=0.85` or lower.

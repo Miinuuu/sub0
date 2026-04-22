@@ -10,54 +10,54 @@
 [l3_8b_k2v2] starting on GPU=0 at 21:43:47
 [l3_8b_k2v2] DONE ppl=10.6524
 [l2_13b_k4v4] starting on GPU=0,1 at 21:44:55
-[l2_13b_k4v4] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_l2_13b_k4v4.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[l2_13b_k4v4] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [l2_13b_k2v2] starting on GPU=0,1 at 21:45:20
 [l2_13b_k2v2] DONE ppl=7.4646
 [q_32b_k4v4] starting on GPU=0,1 at 21:45:44
-[q_32b_k4v4] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_q_32b_k4v4.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[q_32b_k4v4] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [q_32b_k2v2] starting on GPU=0,1 at 21:48:33
-[q_32b_k2v2] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_q_32b_k2v2.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[q_32b_k2v2] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [l2_70b_k4v4] starting on GPU=0,1,2,3 at 21:49:22
-[l2_70b_k4v4] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_l2_70b_k4v4.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[l2_70b_k4v4] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [l2_70b_k2v2] starting on GPU=0,1,2,3 at 21:54:18
-[l2_70b_k2v2] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_l2_70b_k2v2.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[l2_70b_k2v2] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [l3_70b_k4v4] starting on GPU=0,1,2,3 at 21:57:18
-[l3_70b_k4v4] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_l3_70b_k4v4.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[l3_70b_k4v4] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 [l3_70b_k2v2] starting on GPU=0,1,2,3 at 21:59:40
-[l3_70b_k2v2] FAILED (see /home/jmw/ing/research/cda/runs/ppl_kivi_official/_log_l3_70b_k2v2.log)
-      File "/home/jmw/miniconda3/envs/kivi/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[l3_70b_k2v2] FAILED (see <PATH_REDACTED>
+      File "<PATH_REDACTED>", line 1750, in _call_impl
         return forward_call(*args, **kwargs)
-      File "/home/jmw/ing/research/REF/KIVI/models/llama_kivi.py", line 626, in forward
+      File "<PATH_REDACTED>", line 626, in forward
         hidden_states = residual + hidden_states
     RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cuda:1!
 === KIVI Official sweep done Sun 19 Apr 2026 10:01:08 PM KST ===

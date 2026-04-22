@@ -1,0 +1,45 @@
+{
+  "fp16": {
+    "ppl": 3.0142,
+    "n_pos": 63,
+    "time_s": 209.6,
+    "desc": "FP16 (512 B/slot)",
+    "kv_bytes_per_slot": 512
+  },
+  "k8v8": {
+    "ppl": 3.0471,
+    "n_pos": 63,
+    "time_s": 214.7,
+    "desc": "CDA K8V8 (264 B/slot)",
+    "kv_bytes_per_slot": 264,
+    "k_bits": 8,
+    "v_bits": 8
+  },
+  "k4v4": {
+    "ppl": 3.0863,
+    "n_pos": 63,
+    "time_s": 214.9,
+    "desc": "CDA K4V4 (136 B/slot)",
+    "kv_bytes_per_slot": 136,
+    "k_bits": 4,
+    "v_bits": 4
+  },
+  "k4v2": {
+    "ppl": 3.2127,
+    "n_pos": 63,
+    "time_s": 216.6,
+    "desc": "CDA K4V2 (ours) (104 B/slot)",
+    "kv_bytes_per_slot": 104,
+    "k_bits": 4,
+    "v_bits": 2
+  },
+  "k2v2": {
+    "ppl": 3.402,
+    "n_pos": 63,
+    "time_s": 217.4,
+    "desc": "CDA K2V2 (72 B/slot)",
+    "kv_bytes_per_slot": 72,
+    "k_bits": 2,
+    "v_bits": 2
+  }
+}

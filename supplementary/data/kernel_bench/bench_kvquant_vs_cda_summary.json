@@ -4,7 +4,7 @@
   "hardware": "NVIDIA RTX A6000 (48GB, sm_86)",
   "kvquant_shape": "H_q=32 H_kv=32 D=128 (Llama-2-7B MHA, B=1 hardcoded). Int4 NUQ K + Int4 NUQ V with per-channel codebook (K) / per-token codebook (V). RoPE fused in K-matmul.",
   "cda_shape": "H_q=32 H_kv=8 D=128 (Llama-3.1-8B GQA, group_size=4). K4V2 codebook + fp32 norms.",
-  "kvquant_impl": "/home/jmw/ing/research/REF/KVQuant/deployment/kvquant/quant_cuda_kernel.cu: vecquant4matmul_nuq_perchannel_transposed_rope_mha_batched_fused_opt (score) + softmax + vecquant4matmul_nuq_perchannel_transposed_mha_batched_fused_opt (V), non-sparse path.",
+  "kvquant_impl": "<PATH_REDACTED> vecquant4matmul_nuq_perchannel_transposed_rope_mha_batched_fused_opt (score) + softmax + vecquant4matmul_nuq_perchannel_transposed_mha_batched_fused_opt (V), non-sparse path.",
   "cda_impl": "torch.ops._C.cda_decode_full_hmma (single dispatch, register-fragment synthesis).",
   "kv_memory_per_token": {
     "kvquant_int4_int4_mha_32heads": "32 heads * 128 D * (4b K + 4b V) + per-channel K LUT overhead + per-token V LUT overhead ≈ 1024 B/token plus LUT fetch",

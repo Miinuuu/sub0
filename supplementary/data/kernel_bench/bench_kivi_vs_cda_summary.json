@@ -3,7 +3,7 @@
   "date": "2026-04-19",
   "hardware": "NVIDIA RTX A6000 (48GB, sm_86)",
   "shape": "H_q=32 H_kv=8 D=128 (Llama-3.1-8B GQA, group_size=4). Same shape for both methods — apples-to-apples.",
-  "kivi_impl": "/home/jmw/ing/research/REF/KIVI/quant: kivi_gemv.gemv_forward_cuda_outer_dim via cuda_bmm_fA_qB_outer wrapper. K quant-along-outer-dim (tokens), V quant-along-last-dim (channels). group_size=32 in quantization dim.",
+  "kivi_impl": "<PATH_REDACTED> kivi_gemv.gemv_forward_cuda_outer_dim via cuda_bmm_fA_qB_outer wrapper. K quant-along-outer-dim (tokens), V quant-along-last-dim (channels). group_size=32 in quantization dim.",
   "cda_impl": "torch.ops._C.cda_decode_full_hmma (single dispatch, register-fragment synthesis).",
   "kv_memory_per_token": {
     "kivi_k2v2_gqa_8heads": "K: 8 heads × (2b × 128 D + 2×fp16 × 128/32 groups) = 144 B/tok. V same. Total 288 B/tok.",

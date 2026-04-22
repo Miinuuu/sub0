@@ -14,7 +14,7 @@ from pathlib import Path
 from statistics import median
 
 import torch
-sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import vllm._custom_ops  # noqa (register FA2)
 from core.compression import HadamardQuantCompressor
 from core.cda_attn import cda_decode_full_hmma_g8, choose_tile_n_hmma

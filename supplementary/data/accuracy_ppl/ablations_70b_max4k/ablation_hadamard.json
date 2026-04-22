@@ -1,0 +1,20 @@
+{
+  "fp16": {
+    "ppl": 3.0142,
+    "n_pos": 63,
+    "time_s": 209.0,
+    "desc": "FP16"
+  },
+  "cda_k4v2": {
+    "ppl": 3.2127,
+    "n_pos": 63,
+    "time_s": 217.3,
+    "desc": "CDA K4V2 (Hadamard)"
+  },
+  "cda_k4v2_noH": {
+    "ppl": 3.2133,
+    "n_pos": 63,
+    "time_s": 214.8,
+    "desc": "CDA K4V2 (identity) (no rotation)"
+  }
+}
