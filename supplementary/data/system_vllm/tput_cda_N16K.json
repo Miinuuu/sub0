@@ -1,8 +1,0 @@
-[
-  {"backend": "CDA", "B": 1,  "N": 16384, "ok": true, "tok_per_s": 33.8,  "per_req_tok_ms": 29.61,  "elapsed_ms": 3790.0},
-  {"backend": "CDA", "B": 4,  "N": 16384, "ok": true, "tok_per_s": 84.5,  "per_req_tok_ms": 47.35,  "elapsed_ms": 6060.0},
-  {"backend": "CDA", "B": 8,  "N": 16384, "ok": true, "tok_per_s": 115.4, "per_req_tok_ms": 69.35,  "elapsed_ms": 8877.0},
-  {"backend": "CDA", "B": 16, "N": 16384, "ok": true, "tok_per_s": 140.0, "per_req_tok_ms": 114.32, "elapsed_ms": 14632.0},
-  {"backend": "CDA", "B": 32, "N": 16384, "ok": true, "tok_per_s": 156.7, "per_req_tok_ms": 204.20, "elapsed_ms": 26138.0},
-  {"backend": "CDA", "B": 64, "N": 16384, "ok": false, "error": "killed after 31min (exceeded max_concurrency 58 -> excessive preemption)"}
-]
