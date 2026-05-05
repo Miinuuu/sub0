@@ -62,7 +62,6 @@ case "$mode" in
   figures)
     OUT_FIG="$HERE/figures"; OUT_TAB="$HERE/tables"
     mkdir -p "$OUT_FIG" "$OUT_TAB"
-    CDA_FIG_OUT_DIR="$OUT_FIG" "$PY" benchmarks/paper/gen_fig1_4zone.py
     "$PY" benchmarks/paper/gen_fig2_throughput.py \
         results/tableA3_fig2_throughput/16K/*.json results/tableA3_fig2_throughput/64K/*.json results/tableA3_fig2_throughput/128K/*.json results/tableA3_fig2_throughput/4K/*.json \
         --output "$OUT_FIG/fig2_throughput.pdf"

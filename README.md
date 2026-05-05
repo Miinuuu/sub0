@@ -32,7 +32,6 @@ supplementary/
 │   │   ├── bench_capacity_sweep.py            # Fig 2 + Table A3 + Table A4 (with --tp)
 │   │   ├── bench_capacity_grid.py
 │   │   ├── abl_rotation_multiseed.py          # Table A5 (requires CDA_V1_PATH)
-│   │   ├── gen_fig1_4zone.py                  # Fig 1
 │   │   ├── gen_fig2_throughput.py             # Fig 2 plot
 │   │   ├── gen_tab_fig2_raw.py                # Table A3
 │   │   ├── gen_tab_memory.py
@@ -97,20 +96,20 @@ PYTHON=python bash reproduce.sh smoke
 | `tp2`     | ~2 min | Table A4 proxy: TP=2 on 2 GPUs (paper used TP=4 on 4)                        |
 | `table4`  | ~2 min | Table 4 PPL smoke (Mistral-7B, FP16+CDA, max_ctx=512)                        |
 | `table5`  | ~2 min | Table 5 RULER smoke (FA2 niah_single_1, max_ctx=4096)                        |
-| `figures` | ~5 s   | Regenerate Fig 1, Fig 2, Table A3 from `results/`                            |
+| `figures` | ~5 s   | Regenerate Fig 2 plot + Table A3 LaTeX from `results/`                       |
 
 ## Claim → reproduction map
 
-| Paper artifact                | Backing data                                  | How to reproduce                                                                           |
-|-------------------------------|-----------------------------------------------|--------------------------------------------------------------------------------------------|
-| Table 2 (compute-path iso.)   | `results/compute_path_iso/`                   | `bash reproduce.sh smoke` (1 cell) or `table2` (full sweep)                                |
-| Table 3 (kernel head-to-head) | `results/kernel_head_to_head/`                | `bash reproduce.sh table3` for the 4 in-tree columns; KIVI/CommVQ/QJL/PolarQuant cols need `benchmarks/baselines/bench_*_official.py` + REF/* (see `benchmarks/baselines/README.md`) |
-| Table 4 (WikiText-2 PPL)      | `results/ppl_scale/{model}/*.json`            | `bash reproduce.sh table4` (Mistral-7B sample) or full: `bench_ppl_scale.py --model llama8b --methods fp16 cda-4 ...` |
-| Table 5 (RULER long-ctx)      | `results/ruler/{longbench,niah}/`             | `bash reproduce.sh table5` (smoke) or full: `bench_longbench.py --backend {FA2,CDA} --max-model-len {8192,16384,32768}` |
-| Fig 2 + Table A3 (throughput) | `results/throughput/8b_a6000/`                | `bash reproduce.sh fig2` (single cell) or full: `bench_capacity_sweep.py --batches 1 2 4 8 ...`                  |
-| Table A4 (TP=4 70B serving)   | `results/tp4_70b/`                            | `bash reproduce.sh tp2` (TP=2 proxy on 2 GPUs); paper config: `bench_capacity_sweep.py --tp 4 --gpu 0,1,2,3 --model meta-llama/Llama-3.1-70B-Instruct` |
-| Table A5 (rotation ablation)  | `results/ablation_rotation/*.json`            | Backing JSON only; `abl_rotation_multiseed.py` requires the legacy v1 codebase (set `CDA_V1_PATH` env var) |
-| Fig 1 / Fig 2 plots / Table A3 | (post-process from `results/`)               | `bash reproduce.sh figures`                                                                |
+| Paper artifact                | Backing data                                          | How to reproduce                                                                           |
+|-------------------------------|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| Table 2 (compute-path iso.)   | `results/table2_compute_path_iso/`                    | `bash reproduce.sh smoke` (1 cell) or `table2` (full sweep)                                |
+| Table 3 (kernel head-to-head) | `results/table3_cross_baseline/`                      | `bash reproduce.sh table3` for the 4 in-tree columns; KIVI/CommVQ/QJL/PolarQuant cols need `benchmarks/baselines/bench_*_official.py` + REF/* (see `benchmarks/baselines/README.md`) |
+| Table 4 (WikiText-2 PPL)      | `results/table4_ppl/{model}/*.json`                   | `bash reproduce.sh table4` (Mistral-7B sample) or full: `bench_ppl_scale.py --model llama8b --methods fp16 cda-4 ...` |
+| Table 5 (RULER long-ctx)      | `results/table5_ruler/{8k,16k,32k}/{fa2,cda}/`        | `bash reproduce.sh table5` (smoke) or full: `bench_longbench.py --backend {FA2,CDA} --max-model-len {8192,16384,32768}` |
+| Fig 2 + Table A3 (throughput) | `results/tableA3_fig2_throughput/{4K,16K,64K,128K}/`  | `bash reproduce.sh fig2` (single cell) or full: `bench_capacity_sweep.py --batches 1 2 4 8 ...`                  |
+| Table A4 (TP=4 70B serving)   | `results/tableA4_tp4_70b/`                            | `bash reproduce.sh tp2` (TP=2 proxy on 2 GPUs); paper config: `bench_capacity_sweep.py --tp 4 --gpu 0,1,2,3 --model meta-llama/Llama-3.1-70B-Instruct` |
+| Table A5 (rotation ablation)  | `results/tableA5_rotation_ablation/*.json`            | Backing JSON only; `abl_rotation_multiseed.py` requires the legacy v1 codebase (set `CDA_V1_PATH` env var) |
+| Fig 2 plot + Table A3 LaTeX   | (post-process from `results/tableA3_fig2_throughput/`) | `bash reproduce.sh figures`                                                                |
 
 ## Reproduction limitations (honest)
 
