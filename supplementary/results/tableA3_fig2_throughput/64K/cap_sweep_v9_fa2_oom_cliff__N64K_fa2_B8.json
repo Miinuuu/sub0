@@ -1,0 +1,43 @@
+{
+  "config": {
+    "batches": [
+      8
+    ],
+    "prompt_len": 61440,
+    "decode_len": 4096,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 65536,
+    "gpu_mem_util": 0.85,
+    "gpu": 3,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": false,
+    "skip_cda": true,
+    "output": "runs/paper/cap_sweep_v9_fa2_oom_cliff/N64K_fa2_B8.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 8,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 8,
+      "total_wall_s": 839.2450573444366,
+      "total_tokens": 524288,
+      "throughput_tok_s": 624.7138370513222,
+      "wall_s": 877.7146925926208,
+      "status": "ok"
+    }
+  ],
+  "CDA": [],
+  "summary": {
+    "fa2_max_batch_ok": 8,
+    "cda_max_batch_ok": 0,
+    "capacity_multiplier": 0.0
+  }
+}

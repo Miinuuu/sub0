@@ -1,0 +1,77 @@
+{
+  "config": {
+    "batches": [
+      1,
+      2,
+      4
+    ],
+    "prompt_len": 4096,
+    "decode_len": 12288,
+    "model": "meta-llama/Llama-3.1-70B-Instruct",
+    "max_model_len": 16384,
+    "gpu_mem_util": 0.85,
+    "gpu": "0,1,2,3",
+    "tp": 4,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": false,
+    "skip_cda": false,
+    "output": "runs/paper/cap_sweep_70b_tp4/N16K_b1_2_4.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 1,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 20.166071891784668
+    },
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 2,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 19.730424165725708
+    },
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 4,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 20.103585243225098
+    }
+  ],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 1,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 19.64845871925354
+    },
+    {
+      "backend": "CDA",
+      "batch": 2,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 19.646118640899658
+    },
+    {
+      "backend": "CDA",
+      "batch": 4,
+      "status": "fail",
+      "stderr_tail": "EngineCore(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/engine/core.py\", line 114, in __init__\n    self.model_executor = executor_class(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 101, in __init__\n    super().__init__(vllm_config)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/abstract.py\", line 103, in __init__\n    self._init_executor()\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 190, in _init_executor\n    self.workers = WorkerProc.wait_for_ready(unready_workers)\n  File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/executor/multiproc_executor.py\", line 736, in wait_for_ready\n    raise e from None\nException: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.\n",
+      "wall_s": 19.692224740982056
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 0,
+    "cda_max_batch_ok": 0,
+    "capacity_multiplier": null
+  }
+}

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cda-supplementary"
+version = "0.1.0.supp"
+description = "Anonymized supplementary material for Compressed-Domain Attention (NeurIPS 2026)."
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.10,<2.11",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+post = ["matplotlib>=3.7"]
+ppl  = ["transformers>=4.45", "datasets>=2.15"]
+ruler = ["lm-eval>=0.4.5", "vllm==0.19.0"]
+
+[tool.setuptools.packages.find]
+include = ["cda*"]

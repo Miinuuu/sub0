@@ -1,0 +1,56 @@
+{
+  "config": {
+    "batches": [
+      8
+    ],
+    "prompt_len": 4096,
+    "decode_len": 12288,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 16384,
+    "gpu_mem_util": 0.92,
+    "gpu": 3,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": false,
+    "skip_cda": false,
+    "output": "runs/paper/cap_sweep_v6_decodebound_realisticB/N16K.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 8,
+      "prompt_len": 4096,
+      "decode_len": 12288,
+      "n_completed": 8,
+      "total_wall_s": 481.5705096721649,
+      "total_tokens": 131072,
+      "throughput_tok_s": 272.17613489087796,
+      "wall_s": 521.8095805644989,
+      "status": "ok"
+    }
+  ],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 8,
+      "prompt_len": 4096,
+      "decode_len": 12288,
+      "n_completed": 8,
+      "total_wall_s": 429.30983781814575,
+      "total_tokens": 131072,
+      "throughput_tok_s": 305.30863365754425,
+      "wall_s": 470.6906440258026,
+      "status": "ok"
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 8,
+    "cda_max_batch_ok": 8,
+    "capacity_multiplier": 1.0
+  }
+}

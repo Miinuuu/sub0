@@ -1,0 +1,24 @@
+Capacity sweep: prompt=4096, decode=12288
+  batches: [8, 16]
+  GPU: 0,1,2,3
+
+=== FA2 ===
+  → FLASH_ATTN B=8 ...
+  B=8: OK  throughput=99 tok/s  (1407s)
+  → FLASH_ATTN B=16 ...
+Traceback (most recent call last):
+  File "./benchmarks/paper/bench_capacity_sweep.py", line 256, in <module>
+    main()
+  File "./benchmarks/paper/bench_capacity_sweep.py", line 207, in main
+    r = run_one_config("FLASH_ATTN", b, args.prompt_len, args.decode_len,
+  File "./benchmarks/paper/bench_capacity_sweep.py", line 62, in run_one_config
+    proc = subprocess.run(cmd, env=env, capture_output=True, text=True,
+  File "<ENV>/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "<ENV>/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "<ENV>/lib/python3.10/subprocess.py", line 2022, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "<ENV>/lib/python3.10/subprocess.py", line 1198, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['python', './benchmarks/paper/bench_capacity_sweep.py', '--worker', '--backend', 'FLASH_ATTN', '--batch', '16', '--prompt-len', '4096', '--decode-len', '12288', '--model', 'meta-llama/Llama-3.1-70B-Instruct', '--max-model-len', '16384', '--gpu-mem-util', '0.85', '--tp', '4', '--out-tmp', '/tmp/_cap_FLASH_ATTN_b16_tp4.json', '--eager']' timed out after 1800 seconds

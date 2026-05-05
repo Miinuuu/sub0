@@ -1,0 +1,41 @@
+{
+  "config": {
+    "batches": [
+      48,
+      64,
+      96,
+      128
+    ],
+    "prompt_len": 1024,
+    "decode_len": 3072,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 4096,
+    "gpu_mem_util": 0.85,
+    "gpu": 0,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": true,
+    "skip_cda": false,
+    "output": "runs/paper/cap_sweep_v8_cda_high_B/N4K_cda.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 48,
+      "prompt_len": 1024,
+      "decode_len": 3072,
+      "n_completed": 48,
+      "total_wall_s": 142.11509108543396,
+      "total_tokens": 196608,
+      "throughput_tok_s": 1383.4420996275974,
+      "wall_s": 168.04759287834167,
+      "status": "ok"
+    }
+  ]
+}

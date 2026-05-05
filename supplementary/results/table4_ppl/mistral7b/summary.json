@@ -1,0 +1,47 @@
+{
+  "model": "mistralai/Mistral-7B-v0.3",
+  "alias": "mistral7b",
+  "head_dim": 128,
+  "n_layers": 32,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 5.377,
+        "n_pos": 63,
+        "time_s": 32.6
+      },
+      "gear-4": {
+        "ppl": 5.3796,
+        "n_pos": 63,
+        "time_s": 42.1
+      },
+      "gear-2": {
+        "ppl": 5.6353,
+        "n_pos": 63,
+        "time_s": 42.1
+      },
+      "turbo-4": {
+        "ppl": 5.3867,
+        "n_pos": 63,
+        "time_s": 34.3
+      },
+      "turbo-2": {
+        "ppl": 6.6382,
+        "n_pos": 63,
+        "time_s": 34.1
+      },
+      "kivi-4": {
+        "ppl": 5.4424,
+        "n_pos": 63,
+        "time_s": 35.3
+      },
+      "kivi-2": {
+        "ppl": 6.1673,
+        "n_pos": 63,
+        "time_s": 35.4
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "model": "meta-llama/Llama-2-7b-hf",
+  "alias": "llama2-7b",
+  "head_dim": 128,
+  "n_layers": 32,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 5.3997,
+        "n_pos": 63,
+        "time_s": 33.4
+      },
+      "gear-4": {
+        "ppl": 5.418,
+        "n_pos": 63,
+        "time_s": 64.7
+      },
+      "gear-2": {
+        "ppl": 5.7712,
+        "n_pos": 63,
+        "time_s": 64.0
+      },
+      "turbo-4": {
+        "ppl": 5.4256,
+        "n_pos": 63,
+        "time_s": 45.5
+      },
+      "turbo-2": {
+        "ppl": 6.7043,
+        "n_pos": 63,
+        "time_s": 46.1
+      },
+      "kivi-4": {
+        "ppl": 5.3454,
+        "n_pos": 63,
+        "time_s": 38.2
+      },
+      "kivi-2": {
+        "ppl": 5.9582,
+        "n_pos": 63,
+        "time_s": 37.1
+      }
+    }
+  }
+}

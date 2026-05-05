@@ -1,0 +1,41 @@
+{
+  "config": {
+    "purpose": "Re-running Table 3 (cross-baseline native-format decode latency) cells that were `--` or `†` in the paper draft.",
+    "device": "NVIDIA RTX A6000",
+    "mode": "eager",
+    "shape": "Llama-3.1-8B GQA (H_q=32, H_kv=8, D=128, group=4)",
+    "warmup": 10,
+    "iters": 40,
+    "timestamp": "2026-05-05",
+    "envs": {
+      "polarquant": "python (torch 2.10.0+cu128)",
+      "commvq": "python (torch 2.10.0+cu128)",
+      "qjl": "<HOME>/anaconda3/envs/qjl/bin/python (torch 2.4.1+cu121)"
+    }
+  },
+  "results": [
+    { "kernel": "PolarQuant", "B": 4,  "N": 65536, "us": 9335.6,    "ok": true, "old_marker": "--" },
+    { "kernel": "PolarQuant", "B": 32, "N": 16384, "us": 18656.0,   "ok": true, "old_marker": "†",
+      "note": "v1 data showed B=32 always crashed; current run succeeds — kernel must have been fixed since v1 measurement, or v1 had memory pressure." },
+    { "kernel": "CommVQ",     "B": 4,  "N": 65536, "us": 92080.4,   "ok": true, "old_marker": "--" },
+    { "kernel": "CommVQ",     "B": 32, "N": 16384, "us": 188023.5,  "ok": true, "old_marker": "--" },
+    { "kernel": "QJL",        "B": 1,  "N": 65536, "ok": false, "old_marker": "†",
+      "error": "CUDA error: an illegal memory access was encountered (kernel limitation at N>=32K, not wall-time)" },
+    { "kernel": "QJL",        "B": 4,  "N": 65536, "ok": false, "old_marker": "--",
+      "error": "CUDA error: an illegal memory access was encountered (kernel limitation at N>=32K)" },
+    { "kernel": "QJL",        "B": 32, "N": 16384, "ok": false, "old_marker": "--",
+      "error": "CUDA error: an illegal memory access was encountered (qjl_quant_kernel.cu:79 int-indexing: bhn*group*emb = 4194304*4*128 = 2^31 overflows int)",
+      "single_call_b1_n16k_us": 11058,
+      "theoretical_b32_seq_us": 353856,
+      "theoretical_method": "32 x B=1 N=16K single-call latency; in-process sequential batching also fails (second call CUDA illegal mem at N=16K)" }
+  ],
+  "summary": {
+    "vs_fastest_non_cda_unchanged": "Headline ratios are unchanged (FA2 remains fastest non-CDA in every Table 3 row).",
+    "ratio_check": {
+      "B1_N4K":  { "fastest_non_cda_us": 77,   "cda_us": 51,   "ratio": 1.51 },
+      "B1_N64K": { "fastest_non_cda_us": 408,  "cda_us": 301,  "ratio": 1.36 },
+      "B4_N64K": { "fastest_non_cda_us": 1532, "cda_us": 999,  "ratio": 1.53 },
+      "B32_N16K":{ "fastest_non_cda_us": 4232, "cda_us": 1919, "ratio": 2.21 }
+    }
+  }
+}

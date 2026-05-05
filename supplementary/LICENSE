@@ -1,0 +1,19 @@
+Anonymous Supplementary Material License
+
+This supplementary material is distributed solely for the purpose of
+reviewing the accompanying NeurIPS 2026 submission "Compressed-Domain
+Attention: Tensor-Core Decode for 4-Bit Codebook KV Caches".
+
+Reviewers, area chairs, and program committee members may use the
+contents of this archive to verify the claims of the paper. No other
+use, redistribution, or derivative work is permitted prior to the
+public release of the work by its authors.
+
+The pure-PyTorch reference implementation under cda/algorithm/ is
+provided for inspection only and is not licensed for production use.
+The result data under results/ is provided as evidence of the reported
+measurements and is not licensed for republication.
+
+After the official paper release, the authors intend to release the
+production codebase under a permissive open-source license. Until that
+release, no rights are granted beyond review-time inspection.

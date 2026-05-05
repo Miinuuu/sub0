@@ -1,0 +1,17 @@
+Capacity sweep: prompt=61440, decode=4096
+  batches: [1, 2, 4]
+  GPU: 0,1,2,3
+
+=== FA2 ===
+  → FLASH_ATTN B=1 ...
+  B=1: OK  throughput=196 tok/s  (414s)
+  → FLASH_ATTN B=2 ...
+  B=2: OK  throughput=196 tok/s  (747s)
+  → FLASH_ATTN B=4 ...
+  B=4: OK  throughput=196 tok/s  (1416s)
+=== CDA (skipped) ===
+
+============================================================
+Capacity multiplier (CDA / FA2): 0 / 4 = 0.0×
+
+→ runs/paper/cap_sweep_70b_tp4/N64K_b1_2_4_fa2.json

@@ -1,0 +1,27 @@
+{
+  "model": "meta-llama/Llama-3.1-70B-Instruct",
+  "alias": "llama70b",
+  "head_dim": 128,
+  "n_layers": 80,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 2.3051,
+        "n_pos": 63,
+        "time_s": 205.7
+      },
+      "turbo-4": {
+        "ppl": 2.2989,
+        "n_pos": 63,
+        "time_s": 210.6
+      },
+      "turbo-2": {
+        "ppl": 2.9966,
+        "n_pos": 63,
+        "time_s": 213.2
+      }
+    }
+  }
+}

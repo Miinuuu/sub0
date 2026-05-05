@@ -1,0 +1,84 @@
+{
+  "fp16": {
+    "ppl": 7.1216,
+    "n_pos": 63,
+    "time_s": 23.4,
+    "desc": "FP16",
+    "protocol": {
+      "harness": "core.ppl_eval.eval_ppl",
+      "dataset": "wikitext2",
+      "add_special_tokens": true,
+      "filter_empty_lines": true,
+      "max_ctx": 4096,
+      "stride": 64,
+      "n_positions": 63,
+      "canonical": true
+    }
+  },
+  "hadamard": {
+    "ppl": 7.3338,
+    "n_pos": 63,
+    "time_s": 25.5,
+    "desc": "CDA K4V4 (Hadamard)",
+    "protocol": {
+      "harness": "core.ppl_eval.eval_ppl",
+      "dataset": "wikitext2",
+      "add_special_tokens": true,
+      "filter_empty_lines": true,
+      "max_ctx": 4096,
+      "stride": 64,
+      "n_positions": 63,
+      "canonical": true
+    }
+  },
+  "identity": {
+    "ppl": 9.3404,
+    "n_pos": 63,
+    "time_s": 25.5,
+    "desc": "CDA K4V4 (identity)",
+    "protocol": {
+      "harness": "core.ppl_eval.eval_ppl",
+      "dataset": "wikitext2",
+      "add_special_tokens": true,
+      "filter_empty_lines": true,
+      "max_ctx": 4096,
+      "stride": 64,
+      "n_positions": 63,
+      "canonical": true
+    }
+  },
+  "random_orthogonal_seeds": [
+    {
+      "seed": 3290,
+      "ppl": 7.1045,
+      "n_pos": 63
+    },
+    {
+      "seed": 3291,
+      "ppl": 7.2308,
+      "n_pos": 63
+    },
+    {
+      "seed": 3292,
+      "ppl": 7.1797,
+      "n_pos": 63
+    },
+    {
+      "seed": 3293,
+      "ppl": 7.2801,
+      "n_pos": 63
+    },
+    {
+      "seed": 3294,
+      "ppl": 7.1004,
+      "n_pos": 63
+    }
+  ],
+  "random_orthogonal_summary": {
+    "n_seeds": 5,
+    "mean": 7.179100036621094,
+    "std": 0.07847470790147781,
+    "min": 7.100399971008301,
+    "max": 7.280099868774414
+  }
+}

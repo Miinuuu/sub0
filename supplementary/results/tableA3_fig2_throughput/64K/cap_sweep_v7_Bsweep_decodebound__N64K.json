@@ -1,0 +1,90 @@
+{
+  "config": {
+    "batches": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "prompt_len": 61440,
+    "decode_len": 4096,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 65536,
+    "gpu_mem_util": 0.92,
+    "gpu": 1,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": false,
+    "skip_cda": false,
+    "output": "runs/paper/cap_sweep_v7_Bsweep_decodebound/N64K.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 1,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 1,
+      "total_wall_s": 161.14141488075256,
+      "total_tokens": 65536,
+      "throughput_tok_s": 406.6986754987709,
+      "wall_s": 205.16216492652893,
+      "status": "ok"
+    },
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 2,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 2,
+      "total_wall_s": 230.45134782791138,
+      "total_tokens": 131072,
+      "throughput_tok_s": 568.7621323780562,
+      "wall_s": 273.3734700679779,
+      "status": "ok"
+    },
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 3,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 3,
+      "total_wall_s": 302.85539960861206,
+      "total_tokens": 196608,
+      "throughput_tok_s": 649.1810951829872,
+      "wall_s": 343.55574321746826,
+      "status": "ok"
+    },
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 4,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 4,
+      "total_wall_s": 466.64617252349854,
+      "total_tokens": 262144,
+      "throughput_tok_s": 561.7618132007702,
+      "wall_s": 508.14119601249695,
+      "status": "ok"
+    }
+  ],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 1,
+      "status": "oom",
+      "stderr_tail": "OfMemoryError: CUDA out of memory. Tried to allocate 448.00 MiB. GPU 0 has a total capacity of 47.54 GiB of which 353.00 MiB is free. Including non-PyTorch memory, this process has 47.17 GiB memory in use. Of the allocated memory 44.17 GiB is allocated by PyTorch, with 1.08 GiB allocated in private pools (e.g., CUDA Graphs), and 591.67 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n\nProcessed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]\n[rank0]:[W504 01:56:32.806792255 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())\n",
+      "wall_s": 43.86603045463562
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 4,
+    "cda_max_batch_ok": 0,
+    "capacity_multiplier": 0.0
+  }
+}

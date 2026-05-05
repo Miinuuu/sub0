@@ -1,0 +1,43 @@
+{
+  "config": {
+    "purpose": "Tab. 3 re-measurement in CUDA Graph mode for unified timing methodology with Tab. 2 production-path.",
+    "framework": "benchmarks/bench_compute_path_iso_cuda_graph.py",
+    "mode": "cuda_graph_replay",
+    "warmup": 5,
+    "iters": 20,
+    "device": "NVIDIA RTX A6000",
+    "torch_version": "2.10.0+cu128",
+    "timestamp": "2026-05-04T17:58",
+    "model_shape": "H_kv=8, group=4, head_dim=128, block_size=16"
+  },
+  "results": [
+    {
+      "B": 1,
+      "N": 4096,
+      "CDA_us": 41.98399931192398,
+      "dequant_FA2_us": 100.35199671983719,
+      "ratio_CDA_vs_dequantFA2": 0.418367353757145
+    },
+    {
+      "B": 1,
+      "N": 65536,
+      "CDA_us": 289.72800076007843,
+      "dequant_FA2_us": 1360.368013381958,
+      "ratio_CDA_vs_dequantFA2": 0.21297766333081952
+    },
+    {
+      "B": 4,
+      "N": 65536,
+      "CDA_us": 984.4479858875275,
+      "dequant_FA2_us": 5553.6158084869385,
+      "ratio_CDA_vs_dequantFA2": 0.1772625294646978
+    },
+    {
+      "B": 32,
+      "N": 16384,
+      "CDA_us": 1871.359944343567,
+      "dequant_FA2_us": 11630.079746246338,
+      "ratio_CDA_vs_dequantFA2": 0.16090688844567527
+    }
+  ]
+}

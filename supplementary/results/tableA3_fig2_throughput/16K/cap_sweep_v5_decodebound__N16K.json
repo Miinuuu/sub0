@@ -1,0 +1,46 @@
+{
+  "config": {
+    "batches": [
+      192
+    ],
+    "prompt_len": 4096,
+    "decode_len": 12288,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 16384,
+    "gpu_mem_util": 0.92,
+    "gpu": 1,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": false,
+    "skip_cda": false,
+    "output": "runs/paper/cap_sweep_v5_decodebound/N16K.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [
+    {
+      "backend": "FLASH_ATTN",
+      "batch": 192,
+      "status": "fail",
+      "stderr_tail": ".init_device()  # type: ignore\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n[rank0]:     return func(*args, **kwargs)\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/worker/gpu_worker.py\", line 283, in init_device\n[rank0]:     self.requested_memory = request_memory(init_snapshot, self.cache_config)\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/worker/utils.py\", line 413, in request_memory\n[rank0]:     raise ValueError(\n[rank0]: ValueError: Free memory on device cuda:0 (0.64/47.54 GiB) on startup is less than desired GPU memory utilization (0.92, 43.73 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.\n[rank0]:[W504 00:36:49.798776875 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())\n",
+      "wall_s": 13.864644765853882
+    }
+  ],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 192,
+      "status": "fail",
+      "stderr_tail": ".init_device()  # type: ignore\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/tracing/otel.py\", line 178, in sync_wrapper\n[rank0]:     return func(*args, **kwargs)\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/worker/gpu_worker.py\", line 283, in init_device\n[rank0]:     self.requested_memory = request_memory(init_snapshot, self.cache_config)\n[rank0]:   File \"<HOME>/ing/research/REF/vllm_0.19/vllm/v1/worker/utils.py\", line 413, in request_memory\n[rank0]:     raise ValueError(\n[rank0]: ValueError: Free memory on device cuda:0 (0.64/47.54 GiB) on startup is less than desired GPU memory utilization (0.92, 43.73 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.\n[rank0]:[W504 00:37:03.735258788 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())\n",
+      "wall_s": 13.836353540420532
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 0,
+    "cda_max_batch_ok": 0,
+    "capacity_multiplier": null
+  }
+}

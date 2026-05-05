@@ -1,0 +1,70 @@
+{
+  "config": {
+    "batches": [
+      1,
+      2,
+      4
+    ],
+    "prompt_len": 4096,
+    "decode_len": 12288,
+    "model": "meta-llama/Llama-3.1-70B-Instruct",
+    "max_model_len": 16384,
+    "gpu_mem_util": 0.85,
+    "gpu": "0,1,2,3",
+    "tp": 4,
+    "eager": true,
+    "no_cda_memory_saving": false,
+    "skip_fa2": true,
+    "skip_cda": false,
+    "output": "./runs/paper/cap_sweep_70b_tp4/N16K_b1_2_4_cda_v1.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [],
+  "CDA": [
+    {
+      "backend": "CDA",
+      "batch": 1,
+      "prompt_len": 4096,
+      "decode_len": 12288,
+      "n_completed": 1,
+      "total_wall_s": 966.023059129715,
+      "total_tokens": 16384,
+      "throughput_tok_s": 16.960257672068675,
+      "wall_s": 1097.200932264328,
+      "status": "ok"
+    },
+    {
+      "backend": "CDA",
+      "batch": 2,
+      "prompt_len": 4096,
+      "decode_len": 12288,
+      "n_completed": 2,
+      "total_wall_s": 841.692193031311,
+      "total_tokens": 32768,
+      "throughput_tok_s": 38.931096511644874,
+      "wall_s": 923.1732928752899,
+      "status": "ok"
+    },
+    {
+      "backend": "CDA",
+      "batch": 4,
+      "prompt_len": 4096,
+      "decode_len": 12288,
+      "n_completed": 4,
+      "total_wall_s": 876.972827911377,
+      "total_tokens": 65536,
+      "throughput_tok_s": 74.72979539865833,
+      "wall_s": 957.9046421051025,
+      "status": "ok"
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 0,
+    "cda_max_batch_ok": 4,
+    "capacity_multiplier": null
+  }
+}

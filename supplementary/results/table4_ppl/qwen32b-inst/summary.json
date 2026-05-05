@@ -1,0 +1,37 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "alias": "qwen32b-inst",
+  "head_dim": 128,
+  "n_layers": 64,
+  "max_ctx": 4096,
+  "stride": 64,
+  "results": {
+    "wikitext2": {
+      "fp16": {
+        "ppl": 2.3031,
+        "n_pos": 63,
+        "time_s": 112.4
+      },
+      "gear-4": {
+        "ppl": 2.3642,
+        "n_pos": 63,
+        "time_s": 132.0
+      },
+      "gear-2": {
+        "ppl": 2.4248,
+        "n_pos": 63,
+        "time_s": 132.5
+      },
+      "turbo-4": {
+        "ppl": 2.3474,
+        "n_pos": 63,
+        "time_s": 118.3
+      },
+      "turbo-2": {
+        "ppl": 3.7508,
+        "n_pos": 63,
+        "time_s": 119.1
+      }
+    }
+  }
+}
