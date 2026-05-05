@@ -10,7 +10,7 @@
     "envs": {
       "polarquant": "python (torch 2.10.0+cu128)",
       "commvq": "python (torch 2.10.0+cu128)",
-      "qjl": "<HOME>/anaconda3/envs/qjl/bin/python (torch 2.4.1+cu121)"
+      "qjl": "<QJL_ENV>/python (torch 2.4.1+cu121)"
     }
   },
   "results": [

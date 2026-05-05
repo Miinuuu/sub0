@@ -1,7 +1,7 @@
 """Eager class-path entry for vLLM's AttentionBackendEnum registry.
 
 vLLM's ``register_backend`` resolves classes via fully-qualified path
-(``module.attribute``). The four CDA-v2 backend classes live inside a
+(``module.attribute``). The four CDA backend classes live inside a
 closure (``cda.vllm_integration.cda_attn_v2._build_backend_classes``)
 so the module is import-safe outside vLLM environments. This shim
 materializes the classes at import time and re-exports them so the

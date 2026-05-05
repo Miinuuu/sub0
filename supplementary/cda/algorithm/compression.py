@@ -1,6 +1,6 @@
 """Compressed-domain KV encode/decode primitives.
 
-Algorithm (Path B, cda-v1 family):
+Algorithm (Path B, family):
 
     encode:
         x_fp16  : (..., D)
@@ -59,7 +59,7 @@ def hadamard_matrix(d: int, *, dtype: torch.dtype = torch.float32,
 
 def half_rotate_pair(d: int, *, dtype: torch.dtype = torch.float32,
                       device: torch.device | str | None = None) -> Tensor:
-    """The cda-v1 "half rotation" pattern: a Hadamard matrix used once on
+    """The "half rotation" pattern: a Hadamard matrix used once on
     each of (Q, K, V) at the boundary, with the inverse applied to the
     attention output. For Sylvester Hadamard normalized to orthonormal,
     ``H == H^T`` so a single tensor suffices for both forward and inverse.
@@ -76,7 +76,7 @@ def uniform_centroids(num_levels: int, *, dtype: torch.dtype = torch.float32,
                        device: torch.device | str | None = None) -> Tensor:
     """Uniform centroids over [-1, 1] for ``num_levels`` bins.
 
-    Matches cda-v1's ``make_lloyd_centroids_uniform``. For 16 levels:
+    Matches legacy v1's ``make_lloyd_centroids_uniform``. For 16 levels:
         cb = [-15/16, -13/16, ..., 13/16, 15/16]
     """
     edges = torch.linspace(-1.0, 1.0, num_levels + 1, dtype=dtype, device=device)

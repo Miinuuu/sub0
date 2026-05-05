@@ -2,9 +2,9 @@
 
 These scripts measure baseline kernels referenced by the paper. They
 are kept for **provenance / reference**; most are not runnable in the
-cda-v2 tree alone because they depend on the vendored baseline
+this codebase tree alone because they depend on the vendored baseline
 implementations under `REF/` and (for Table 4) the legacy `cda.eval`
-module that was never ported from cda-v1.
+module that was never ported from legacy v1.
 
 ## Paper artifact map
 
@@ -46,7 +46,7 @@ module that was never ported from cda-v1.
   to run the 13 RULER subtasks (8 NIAH + 5 RULER) on
   Llama-3.1-8B-Instruct under either FA2 or CDA, then aggregates Macro
   (mean over 13) and NIAH (mean over 8) into the paper Table 5 format.
-  CDA backend requires the cda-v2 vLLM plugin (`VLLM_PLUGINS=cda_v2`)
+  CDA backend requires the this codebase vLLM plugin (`VLLM_PLUGINS=cda_v2`)
   and the K4V4 KV-cache page-size patch (`CDA_V2_ENABLE_MEMORY_SAVING=1`)
   to reach every vLLM worker process; the script sets both env vars
   automatically when ``--backend CDA`` is passed.

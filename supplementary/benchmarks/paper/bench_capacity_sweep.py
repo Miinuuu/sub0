@@ -7,7 +7,7 @@ OOM cliff measures the user-visible concurrent-capacity multiplier.
 This addresses the core paper claim: "≤ 3.56× concurrent-capacity
 multiplier at the memory wall."
 
-Usage (lab-server 10022, GPU 3):
+Usage (GPU 3 (multi-GPU server)):
     python \
       benchmarks/paper/bench_capacity_sweep.py \
         --batches 8 16 32 48 64 96 128 \

@@ -1,4 +1,4 @@
-"""vLLM general plugin entry point for cda-v2 backend registration.
+"""vLLM general plugin entry point for this codebase backend registration.
 
 Registered as ``vllm.general_plugins/cda_v2`` in pyproject.toml. vLLM
 imports and runs all enabled general plugins at startup in EVERY worker

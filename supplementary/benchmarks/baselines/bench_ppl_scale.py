@@ -3,7 +3,7 @@
 All table methods (FP16, KIVI, GEAR, CDA, TurboQuant, QuaRot-style) with
 multi-GPU via ``device_map="auto"``. Outputs JSON per model per dataset.
 
-Ported from cda-v1 ``experiments/bench_ppl_scale.py``. The protocol
+Ported from legacy v1 ``experiments/bench_ppl_scale.py``. The protocol
 (stride=64, max_ctx=4096, filter_empty_lines, add_special_tokens) is
 **locked** to the paper's canonical settings via ``cda.eval.ppl``.
 
@@ -127,7 +127,7 @@ def run_kivi(model, input_ids, positions, nbits):
 
 
 def _load_gear_funcs():
-    """Locate GEAR's compress_function. Prefers REF/ inside cda-v2."""
+    """Locate GEAR's compress_function. Prefers REF/ inside this codebase."""
     candidates = [
         PROJECT_ROOT / "REF" / "GEAR" / "GenerationBench" / "GenerationTest"
             / "GEARLM" / "Simulated" / "compress_function.py",
@@ -176,9 +176,9 @@ def run_gear(model, input_ids, positions, nbits, n_layers):
     return eval_ppl(model, input_ids, fn, positions, desc=f"GEAR-{nbits}bit")
 
 
-# ── CDA via cda-v2 algorithm.Compressor ─────────────────────────────
+# ── CDA via this codebase algorithm.Compressor ─────────────────────────────
 def _make_cda_compress_fn(model, k_comp, v_comp, skip_sinks, n_layers):
-    """SW reference: encode → decode (round-trip via cda-v2 Compressor),
+    """SW reference: encode → decode (round-trip via this codebase Compressor),
     then run the standard fp16 attention. Mimics the kernel's distortion.
 
     transformers 4.57+ exposes per-layer K/V as ``kv.layers[i].keys`` /

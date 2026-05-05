@@ -109,7 +109,7 @@ PYTHON=python bash reproduce.sh smoke
 | Table 5 (RULER long-ctx)      | `results/ruler/{longbench,niah}/`             | `bash reproduce.sh table5` (smoke) or full: `bench_longbench.py --backend {FA2,CDA} --max-model-len {8192,16384,32768}` |
 | Fig 2 + Table A3 (throughput) | `results/throughput/8b_a6000/`                | `bash reproduce.sh fig2` (single cell) or full: `bench_capacity_sweep.py --batches 1 2 4 8 ...`                  |
 | Table A4 (TP=4 70B serving)   | `results/tp4_70b/`                            | `bash reproduce.sh tp2` (TP=2 proxy on 2 GPUs); paper config: `bench_capacity_sweep.py --tp 4 --gpu 0,1,2,3 --model meta-llama/Llama-3.1-70B-Instruct` |
-| Table A5 (rotation ablation)  | `results/ablation_rotation/*.json`            | Backing JSON only; `abl_rotation_multiseed.py` requires the cda-v1 codebase (set `CDA_V1_PATH` env var) |
+| Table A5 (rotation ablation)  | `results/ablation_rotation/*.json`            | Backing JSON only; `abl_rotation_multiseed.py` requires the legacy v1 codebase (set `CDA_V1_PATH` env var) |
 | Fig 1 / Fig 2 plots / Table A3 | (post-process from `results/`)               | `bash reproduce.sh figures`                                                                |
 
 ## Reproduction limitations (honest)
@@ -123,7 +123,7 @@ PYTHON=python bash reproduce.sh smoke
 - **Table A4**: paper's TP=4 on Llama-3.1-70B requires 4× A6000.
   ``reproduce.sh tp2`` runs the same code path on TP=2 + 8B as a
   smaller proxy.
-- **Table A5**: rotation ablation depends on the cda-v1 codebase
+- **Table A5**: rotation ablation depends on the legacy v1 codebase
   (Compressor v1 + ppl_eval). Backing JSONs are preserved.
 - **Anonymization**: author identifiers and absolute paths have been
   removed from every shipped file.

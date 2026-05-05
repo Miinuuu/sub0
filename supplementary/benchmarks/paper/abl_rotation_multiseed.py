@@ -1,6 +1,6 @@
 """Multi-seed rotation ablation — Hadamard vs Random orthogonal vs Identity.
 
-Resolves Codex Round-2 W2 / Round-3 / Round-4: prior single-seed result
+Resolves Earlier review iterations: prior single-seed result
 showed Hadamard 0.225 PPL behind random orthogonal on Llama-3.1-8B
 K4V4 — a gap that cannot be dismissed as seed noise without multi-seed
 evidence. This script runs N independent Haar-random orthogonal seeds
@@ -23,10 +23,10 @@ Usage (single GPU):
         --n-seeds 5 \
         --output runs/paper/abl_rotation_multiseed.json
 
-Imports cda-v1's compressor + ppl_eval (which produced the existing
+Imports legacy v1's compressor + ppl_eval (which produced the existing
 v1_paper data). Quantizer is shared between v1 and v2 per CLAUDE.md.
 
-NOTE: requires the cda-v1 codebase on sys.path (not redistributed in
+NOTE: requires the legacy v1 codebase on sys.path (not redistributed in
 v2). Set CDA_V1_PATH env var or edit the path below to point at a v1
 clone. Backing data is preserved under
 ``runs/baselines/ablation_rotation_alternatives*.json``.
@@ -40,7 +40,7 @@ from pathlib import Path
 
 import torch
 
-# Add cda-v1 path for HadamardQuantCompressor + ppl_eval
+# Add legacy v1 path for HadamardQuantCompressor + ppl_eval
 CDA_V1 = Path(os.environ.get("CDA_V1_PATH", "../cda"))
 if str(CDA_V1) not in sys.path:
     sys.path.insert(0, str(CDA_V1))

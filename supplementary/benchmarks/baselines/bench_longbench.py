@@ -6,7 +6,7 @@ lm-evaluation-harness with the vLLM model interface. Aggregates
 ``Macro`` (mean over all 13 subtasks) and ``NIAH`` (mean over the 8
 needle-in-haystack subtasks) into the paper Table 5 format.
 
-Replaces the cda-v1 LongBench-single driver that depended on
+Replaces the legacy LongBench-single driver that depended on
 ``cda.eval.cda_decode``; the paper used lm-evaluation-harness directly,
 so this rewrite mirrors that path.
 

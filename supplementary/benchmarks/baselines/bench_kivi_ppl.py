@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse, json, sys, os, time, math
 from pathlib import Path
 
-# Resolve REF/ relative to cda-v2 root, with legacy fallback
+# Resolve REF/ relative to repo root, with legacy fallback
 _REPO = Path(__file__).resolve().parents[2]
 _KIVI_DIR = _REPO / "REF" / "KIVI"
 if not _KIVI_DIR.exists():

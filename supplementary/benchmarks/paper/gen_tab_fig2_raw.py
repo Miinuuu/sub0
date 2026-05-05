@@ -1,4 +1,4 @@
-"""Build LaTeX appendix table backing Fig 2 (Codex R7 Fix #3).
+"""Build LaTeX appendix table backing Fig 2.
 
 Consolidates cap_sweep_v7/v8/v9 raw data into one table:
   N | B | FA2 tok/s | CDA tok/s | Gain | prompt | decode

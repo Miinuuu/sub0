@@ -1,4 +1,4 @@
-"""CDA-v2 AttentionBackend for vLLM 0.19 (v1 API).
+"""CDA AttentionBackend for vLLM 0.19 (v1 API).
 
 Production-grade integration of v1 HMMA CUDA kernels (vendored under
 ``cda/kernels_cuda/``) into vLLM's attention backend protocol. Mirrors
@@ -26,7 +26,7 @@ K4V4 layout (slot_width = D + 8 = 136 B for D=128):
        D+4    4   norm_V fp32
        D+8         (total)
 
-vs cda-v1 K4V2 layout (104 B/slot): we trade 32 extra bytes/slot
+vs legacy K4V& layout (104 B/slot): we trade 32 extra bytes/slot
 (31% bigger) for a faster Tensor-Core MMA fp16 path (V at 4-bit fits
 the same lookup pipeline as K, no separate 2-bit unpacking shader).
 
@@ -62,7 +62,7 @@ _SLOT_FP16_ELEMS_PER_TOKEN = 256                      # 512 B/slot — vLLM defa
 
 def _as_uint8_cache(kv_cache: torch.Tensor) -> torch.Tensor:
     """Reinterpret vLLM's fp16-typed KV cache buffer as uint8 bytes so the
-    cda-v2 paged adapter can read 136-byte slots directly."""
+    this codebase paged adapter can read 136-byte slots directly."""
     if kv_cache.dtype == torch.uint8:
         return kv_cache
     num_blocks, block_size, num_kv_heads, last = kv_cache.shape
@@ -83,10 +83,10 @@ def _as_uint8_cache(kv_cache: torch.Tensor) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 def enable_cda_memory_saving() -> None:
     """Monkey-patch ``AttentionSpec.real_page_size_bytes`` so vLLM accounts
-    for cda-v2's smaller 136 B/slot vs default 512 B/slot.
+    for this codebase's smaller 136 B/slot vs default 512 B/slot.
 
     Idempotent. Call BEFORE constructing ``LLM`` if you want the KV memory
-    savings (~3.76× vs FP16, vs ~4.92× for cda-v1 K4V2 — small regression
+    savings (~3.76× vs FP16, vs ~4.92× for legacy K4V& — small regression
     in compression ratio, big improvement in kernel speed)."""
     from vllm.v1.kv_cache_interface import (
         AttentionSpec, FullAttentionSpec, ChunkedLocalAttentionSpec,
@@ -532,7 +532,7 @@ def _build_backend_classes():
 
         @staticmethod
         def get_supported_kernel_block_sizes() -> list:
-            # cda-v2 decode kernel works with any block_size that's a
+            # this codebase decode kernel works with any block_size that's a
             # multiple of 16 (matches our N_BLOCK=32 alignment).
             return [MultipleOf(16)]
 
@@ -542,7 +542,7 @@ def _build_backend_classes():
             # lookup that resolves the enum member from a constructed
             # backend instance. We override the existing ``CDA`` slot so
             # the name must match — the v1 CDA backend was previously at
-            # this slot; cda-v2 takes its place via register_backend("CDA").
+            # this slot; this codebase takes its place via register_backend("CDA").
             return "CDA"
 
         @staticmethod
@@ -563,7 +563,7 @@ def _build_backend_classes():
         ) -> tuple[int, ...]:
             if head_size != HEAD_DIM:
                 raise ValueError(
-                    f"CDA-v2 backend supports head_size={HEAD_DIM} only. "
+                    f"CDA backend supports head_size={HEAD_DIM} only. "
                     f"Got head_size={head_size}.")
             # Always use compact 144B/slot. Earlier this conditioned on
             # `_cda_v2_patched` flag, but in environments where the
@@ -619,16 +619,16 @@ def _build_backend_classes():
             self.group_size = self.num_heads // self.num_kv_heads
             self.attn_type = attn_type
             if alibi_slopes is not None:
-                raise NotImplementedError("CDA-v2 backend does not support ALiBi.")
+                raise NotImplementedError("CDA backend does not support ALiBi.")
             if sliding_window is not None:
                 raise NotImplementedError(
-                    "CDA-v2 backend does not support sliding window.")
+                    "CDA backend does not support sliding window.")
             if attn_type not in (AttentionType.DECODER,):
                 raise NotImplementedError(
-                    f"CDA-v2 backend is DECODER-only, got {attn_type}.")
+                    f"CDA backend is DECODER-only, got {attn_type}.")
             if self.group_size not in (4, 8):
                 raise NotImplementedError(
-                    f"CDA-v2 supports group_size ∈ {{4, 8}} (Llama-3.1-{{8B,70B}}). "
+                    f"CDA supports group_size ∈ {{4, 8}} (Llama-3.1-{{8B,70B}}). "
                     f"Got group_size={self.group_size}.")
 
         def do_kv_cache_update(
@@ -669,10 +669,10 @@ def _build_backend_classes():
             output_block_scale: torch.Tensor | None = None,
         ) -> torch.Tensor:
             if output is None:
-                raise ValueError("CDA-v2 backend requires an output buffer.")
+                raise ValueError("CDA backend requires an output buffer.")
             if output_scale is not None or output_block_scale is not None:
                 raise NotImplementedError(
-                    "CDA-v2 backend does not support fused output quantization.")
+                    "CDA backend does not support fused output quantization.")
             if attn_metadata is None:
                 return output.fill_(0)
             kv_cache = _as_uint8_cache(kv_cache)
@@ -825,15 +825,15 @@ def _build_backend_classes():
                         "fa2_rawkv", "fa2_cda_rawkv", "fa2_cda_fused_rawkv",
                     )):
                 raise NotImplementedError(
-                    "CDA-v2 prefill requires uniform chunked-prefill shapes; "
+                    "CDA prefill requires uniform chunked-prefill shapes; "
                     "fallback paths are disabled.")
             if first_L <= 0:
                 raise NotImplementedError(
-                    "CDA-v2 prefill received an empty prefill chunk; "
+                    "CDA prefill received an empty prefill chunk; "
                     "fallback paths are disabled.")
             if group not in (4, 8):
                 raise NotImplementedError(
-                    f"CDA-v2 P34 prefill supports group_size 4 or 8, got {group}.")
+                    f"CDA P34 prefill supports group_size 4 or 8, got {group}.")
 
             return self._forward_prefill_full_hmma_v1(
                 query, key, value, output, attn_metadata, kv_cache,
@@ -1412,7 +1412,7 @@ def _build_backend_classes():
                 )
             else:
                 raise NotImplementedError(
-                    "CDA-v2 decode requires 16-byte aligned compressed slots; "
+                    "CDA decode requires 16-byte aligned compressed slots; "
                     "fallback paths are disabled.")
 
             if output.dim() == 3:
@@ -1425,7 +1425,7 @@ def _build_backend_classes():
         def _forward_decode_dcp(self, query, kv_cache, output, attn_metadata):
             """DCP decode is disabled until it has a CUDA HMMA implementation."""
             raise NotImplementedError(
-                "CDA-v2 DCP decode needs a CUDA HMMA partial kernel; "
+                "CDA DCP decode needs a CUDA HMMA partial kernel; "
                 "fallback paths are disabled.")
 
     return (CDAv2AttentionBackend, CDAv2AttentionImpl,
@@ -1438,7 +1438,7 @@ def get_backend_classes():
 
 
 def register_backend(slot: str = "CDA") -> None:
-    """Register the cda-v2 backend in vLLM's AttentionBackendEnum.
+    """Register the this codebase backend in vLLM's AttentionBackendEnum.
 
     Call this BEFORE constructing ``LLM`` to enable
     ``attention_backend="CDA"`` (or whatever ``slot`` you pass) in your
@@ -1446,7 +1446,7 @@ def register_backend(slot: str = "CDA") -> None:
 
     Args:
         slot: which AttentionBackendEnum member to override. ``"CDA"``
-            (default) replaces vLLM's vendored cda-v1 entry; ``"CUSTOM"``
+            (default) replaces vLLM's vendored legacy v1 entry; ``"CUSTOM"``
             uses the placeholder slot. Both work with
             ``LLM(attention_backend=slot)``.
 

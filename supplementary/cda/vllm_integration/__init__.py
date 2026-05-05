@@ -1,3 +1,3 @@
-"""CUDA-backed vLLM integration modules for CDA-v2."""
+"""CUDA-backed vLLM integration modules for CDA."""
 
 __all__: list[str] = []

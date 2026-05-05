@@ -15,7 +15,7 @@ Design notes
 Every entry in ``runs/`` from 2026-04-23 onwards should carry the
 ``protocol`` field so cross-run consistency can be verified after the fact.
 
-Ported from cda-v1 ``core/ppl_eval.py`` — keeping the same API ensures
+Ported from legacy v1 ``core/ppl_eval.py`` — keeping the same API ensures
 that runs/v1 cached JSONs are directly comparable.
 """
 from __future__ import annotations
