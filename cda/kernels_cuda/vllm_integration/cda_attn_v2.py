@@ -134,6 +134,25 @@ _TIME_STEPS_PREFIX = _os.environ.get(
 # prefill always uses the P34 full-HMMA multi-Q kernel.
 _USE_HMMA_V1 = _os.environ.get("CDA_V2_USE_HMMA_V1") == "1"
 
+# Paper Fig 2 dequant+FA2 baseline. Opt-in via
+# CDA_DECODE_BACKEND=dequant_fa2 — at decode time, the backend extracts
+# K4V4 indices/norms from the paged cache, materializes a dense FP16 paged
+# KV cache, and dispatches FA2 varlen with block_table indirection. This
+# is the Class (a) execution path of Table 1 (TurboQuant default decode).
+# Cache layout, scheduler, and sampler are unchanged — only the decode
+# attention call differs from the default HMMA v1 path.
+#
+# CDA_DECODE_BACKEND=fused_dequant_fa2 selects the R1 in-kernel SMEM-tile
+# fused variant: same Class (a) baseline but using the fused FA2 fork that
+# performs codebook-lookup + Hadamard rotation per tile inside the
+# attention loop (no FP16 K/V materialization).
+_DEQUANT_FA2_DECODE = (
+    _os.environ.get("CDA_DECODE_BACKEND", "hmma_v1").lower() == "dequant_fa2"
+)
+_FUSED_DEQUANT_FA2_DECODE = (
+    _os.environ.get("CDA_DECODE_BACKEND", "hmma_v1").lower() == "fused_dequant_fa2"
+)
+
 
 def _time_steps_out():
     prefix = _os.environ.get("CDA_V2_TIME_STEPS_OUT", _TIME_STEPS_PREFIX)
@@ -160,6 +179,8 @@ _TIMINGS: dict = {
     "decode_setup": [],
     "decode_q_cast": [],
     "decode_hmma": [],
+    "decode_dequant_fa2": [],
+    "decode_fused_dequant_fa2": [],
     "decode_output_copy": [],
     # Sub-step timings inside _forward_decode (added to localize the
     # 1.21 ms / call wrapper overhead at 8K).
@@ -1038,6 +1059,245 @@ def _build_backend_classes():
                 block_size=block_size,
             )
 
+        def _call_dequant_fa2_decode(
+            self, q_in, kv_cache_flat, attn_metadata, out_buf, *,
+            cb_K, cb_V, rotation_fp32, rotation_fp16, block_size,
+        ):
+            """Dequant+FA2 baseline decode (Class (a) in Table 1).
+
+            R2 separate-kernel staging variant: gather active K4V4 slots
+            from the paged uint8 cache, dequantize to dense FP16 K/V via
+            the codebook lookup CUDA op, then dispatch standard FA2
+            varlen over the dense paged tensors. Hadamard rotation runs
+            as separate matmuls before/after attention. Steps mirror
+            TurboQuant's default decode path: same K4V4 source as CDA,
+            FP16 reconstruction, vanilla FA2, with rotations as separate
+            matmuls (no kernel-level fusion). Entirely on-GPU — there are
+            no host syncs in the decode hot path, so vLLM's CUDA Graph
+            replay is preserved.
+            """
+            from cda.kernels_vllm_fa2_fork import (
+                dequantize_compressed_kv,
+                flash_attn_varlen_func,
+            )
+            from cda.kernels_cuda.fa2_cda import _hadamard_or_matmul
+
+            _, H_kv, slot_w = kv_cache_flat.shape
+            D = self.head_size
+            k_bytes = D // 2
+            v_bytes = D // 2
+            device = kv_cache_flat.device
+
+            B_active = q_in.shape[0]
+            max_seq_len_int = int(attn_metadata.max_seq_len)
+            max_nblk = (max_seq_len_int + block_size - 1) // block_size
+            max_n_padded = max_nblk * block_size
+
+            block_table = attn_metadata.block_table[:B_active, :max_nblk]
+            seq_lens = attn_metadata.seq_lens[:B_active]
+            B = B_active
+
+            # Build padded slot indices on GPU; clamp to valid pool
+            # range so vLLM's dummy_run cannot dereference garbage IDs.
+            arange_n = torch.arange(
+                max_n_padded, dtype=torch.long, device=device,
+            )
+            arange_blk = arange_n // block_size
+            arange_off = arange_n % block_size
+            block_ids = block_table.long().index_select(1, arange_blk)
+            total_pool_slots = kv_cache_flat.shape[0]
+            num_pool_blocks = total_pool_slots // block_size
+            block_ids = block_ids.clamp_(min=0, max=num_pool_blocks - 1)
+            slot_ids = (
+                block_ids * block_size + arange_off.unsqueeze(0)
+            ).reshape(-1)
+
+            active = kv_cache_flat.index_select(0, slot_ids)
+            total_padded = B * max_n_padded
+            K_idx = active[:, :, 0:k_bytes].contiguous()
+            V_idx = active[:, :, k_bytes:k_bytes + v_bytes].contiguous()
+            K_norm = (
+                active[:, :, k_bytes + v_bytes:k_bytes + v_bytes + 4]
+                .contiguous().reshape(-1).view(torch.float32)
+                .reshape(total_padded, H_kv).contiguous()
+            )
+            V_norm = (
+                active[:, :, k_bytes + v_bytes + 4:k_bytes + v_bytes + 8]
+                .contiguous().reshape(-1).view(torch.float32)
+                .reshape(total_padded, H_kv).contiguous()
+            )
+
+            K_full, V_full = dequantize_compressed_kv(
+                K_idx, K_norm, V_idx, V_norm, cb_K, cb_V,
+            )
+            K_paged = K_full.view(B * max_nblk, block_size, H_kv, D)
+            V_paged = V_full.view(B * max_nblk, block_size, H_kv, D)
+            compact_block_table = (
+                torch.arange(
+                    B * max_nblk, dtype=torch.int32, device=device,
+                ).reshape(B, max_nblk)
+            )
+
+            q_in_fp16 = (
+                q_in if q_in.dtype == torch.float16 else q_in.to(torch.float16)
+            )
+            q_rot = _hadamard_or_matmul(
+                q_in_fp16.contiguous(), rotation_fp32,
+            )
+
+            cu_seqlens_q = torch.arange(
+                B + 1, dtype=torch.int32, device=device,
+            )
+
+            if out_buf.dim() == 3 and out_buf.shape[0] == B:
+                out_view = out_buf
+            elif out_buf.dim() == 2 and out_buf.shape[0] == B:
+                out_view = out_buf.view(B, self.num_heads, D)
+            else:
+                out_view = torch.empty(
+                    B, self.num_heads, D,
+                    dtype=torch.float16, device=device,
+                )
+
+            fa2_scratch = torch.empty_like(out_view)
+            flash_attn_varlen_func(
+                q_rot, K_paged, V_paged,
+                max_seqlen_q=1,
+                cu_seqlens_q=cu_seqlens_q,
+                max_seqlen_k=max_seq_len_int,
+                seqused_k=seq_lens,
+                block_table=compact_block_table,
+                softmax_scale=self.scale,
+                causal=True,
+                out=fa2_scratch,
+                fa_version=2,
+            )
+
+            # Output rotation (compressed → model frame). Without this
+            # the FA2 output stays in the rotated/compressed frame and
+            # downstream o_proj receives garbage.
+            _hadamard_or_matmul(
+                fa2_scratch.contiguous(), rotation_fp32, out=out_view,
+            )
+
+            if out_view is not out_buf:
+                out_buf[:].copy_(out_view.reshape(out_buf.shape))
+
+        def _call_fused_dequant_fa2_decode(
+            self, q_in, kv_cache_flat, attn_metadata, out_buf, *,
+            cb_K, cb_V, rotation_fp32, rotation_fp16, block_size,
+        ):
+            """Fused dequant+FA2 baseline decode (Class (a) in Table 1).
+
+            R1 in-kernel SMEM-tile dequant variant: directly invokes
+            ``flash_attn_varlen_compressed_kv_fused_func`` over the K4V4
+            paged cache without materializing FP16 K/V tensors. The fused
+            FA2 kernel performs codebook-lookup + Hadamard rotation per
+            tile inside the attention loop.
+            """
+            from cda.kernels_vllm_fa2_fork import (
+                flash_attn_varlen_compressed_kv_fused_func,
+            )
+            from cda.kernels_cuda.fa2_cda import _hadamard_or_matmul
+
+            _, H_kv, slot_w = kv_cache_flat.shape
+            D = self.head_size
+            k_bytes = D // 2
+            v_bytes = D // 2
+            device = kv_cache_flat.device
+
+            B_active = q_in.shape[0]
+            max_seq_len_int = int(attn_metadata.max_seq_len)
+            max_nblk = (max_seq_len_int + block_size - 1) // block_size
+            max_n_padded = max_nblk * block_size
+
+            block_table = attn_metadata.block_table[:B_active, :max_nblk]
+            seq_lens = attn_metadata.seq_lens[:B_active]
+            B = B_active
+
+            arange_n = torch.arange(
+                max_n_padded, dtype=torch.long, device=device,
+            )
+            arange_blk = arange_n // block_size
+            arange_off = arange_n % block_size
+            block_ids = block_table.long().index_select(1, arange_blk)
+            total_pool_slots = kv_cache_flat.shape[0]
+            num_pool_blocks = total_pool_slots // block_size
+            block_ids = block_ids.clamp_(min=0, max=num_pool_blocks - 1)
+            slot_ids = (
+                block_ids * block_size + arange_off.unsqueeze(0)
+            ).reshape(-1)
+
+            active = kv_cache_flat.index_select(0, slot_ids)
+            total_padded = B * max_n_padded
+            # Reshape into paged 4D layout (num_blocks, block_size, H_kv, D/2)
+            num_active_blocks = B * max_nblk
+            K_idx = active[:, :, 0:k_bytes].contiguous().view(
+                num_active_blocks, block_size, H_kv, k_bytes
+            )
+            V_idx = active[:, :, k_bytes:k_bytes + v_bytes].contiguous().view(
+                num_active_blocks, block_size, H_kv, v_bytes
+            )
+            K_norm = (
+                active[:, :, k_bytes + v_bytes:k_bytes + v_bytes + 4]
+                .contiguous().reshape(-1).view(torch.float32)
+                .reshape(num_active_blocks, block_size, H_kv).contiguous()
+            )
+            V_norm = (
+                active[:, :, k_bytes + v_bytes + 4:k_bytes + v_bytes + 8]
+                .contiguous().reshape(-1).view(torch.float32)
+                .reshape(num_active_blocks, block_size, H_kv).contiguous()
+            )
+            compact_block_table = (
+                torch.arange(
+                    num_active_blocks, dtype=torch.int32, device=device,
+                ).reshape(B, max_nblk)
+            )
+
+            q_in_fp16 = (
+                q_in if q_in.dtype == torch.float16 else q_in.to(torch.float16)
+            )
+            q_rot = _hadamard_or_matmul(
+                q_in_fp16.contiguous(), rotation_fp32,
+            )
+
+            cu_seqlens_q = torch.arange(
+                B + 1, dtype=torch.int32, device=device,
+            )
+
+            if out_buf.dim() == 3 and out_buf.shape[0] == B:
+                out_view = out_buf
+            elif out_buf.dim() == 2 and out_buf.shape[0] == B:
+                out_view = out_buf.view(B, self.num_heads, D)
+            else:
+                out_view = torch.empty(
+                    B, self.num_heads, D,
+                    dtype=torch.float16, device=device,
+                )
+
+            fa2_scratch = torch.empty_like(out_view)
+            flash_attn_varlen_compressed_kv_fused_func(
+                q_rot,
+                K_idx, K_norm,
+                V_idx, V_norm,
+                cb_K, cb_V,
+                1, cu_seqlens_q, max_seq_len_int, None,
+                out=fa2_scratch,
+                softmax_scale=self.scale,
+                num_splits=1,
+                seqused_k=seq_lens,
+                block_table=compact_block_table,
+                gqa_decode_swap=None,
+                uniform_codebook=False,
+            )
+
+            _hadamard_or_matmul(
+                fa2_scratch.contiguous(), rotation_fp32, out=out_view,
+            )
+
+            if out_view is not out_buf:
+                out_buf[:].copy_(out_view.reshape(out_buf.shape))
+
         def _call_decode_hmma_v1(
             self, q_in, kv_cache_flat, attn_metadata, out_buf, *,
             cb_K, cb_V, rotation_fp32, rotation_fp16, block_size,
@@ -1349,10 +1609,22 @@ def _build_backend_classes():
                             and output.shape[1] == self.num_heads
                             and output.shape[2] == self.head_size):
                         out_view = output
+                # Class (a) baseline dispatch (env-gated): dequant+FA2 (R2)
+                # or fused dequant+FA2 (R1). Otherwise default decode_hmma_v1.
+                if _DEQUANT_FA2_DECODE:
+                    _decode_call = self._call_dequant_fa2_decode
+                    _decode_label = "decode_dequant_fa2"
+                elif _FUSED_DEQUANT_FA2_DECODE:
+                    _decode_call = self._call_fused_dequant_fa2_decode
+                    _decode_label = "decode_fused_dequant_fa2"
+                else:
+                    _decode_call = self._call_decode_hmma_v1
+                    _decode_label = "decode_hmma"
+
                 if out_view is not None:
                     _time_call(
-                        "decode_hmma",
-                        lambda: self._call_decode_hmma_v1(
+                        _decode_label,
+                        lambda: _decode_call(
                             q_in, kv_cache_flat, attn_metadata, out_view,
                             cb_K=cb_K, cb_V=cb_V,
                             rotation_fp32=rot_fp32, rotation_fp16=rot_fp16,
@@ -1362,8 +1634,8 @@ def _build_backend_classes():
                     return output
                 out = torch.empty_like(q_in)
                 _time_call(
-                    "decode_hmma",
-                    lambda: self._call_decode_hmma_v1(
+                    _decode_label,
+                    lambda: _decode_call(
                         q_in, kv_cache_flat, attn_metadata, out,
                         cb_K=cb_K, cb_V=cb_V,
                         rotation_fp32=rot_fp32, rotation_fp16=rot_fp16,

@@ -1,0 +1,90 @@
+{
+  "config": {
+    "batches": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "prompt_len": 126976,
+    "decode_len": 4096,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 131072,
+    "gpu_mem_util": 0.85,
+    "gpu": "3",
+    "tp": 1,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": true,
+    "skip_cda": true,
+    "skip_dequant_fa2": true,
+    "skip_fused_dequant_fa2": false,
+    "only_fused_dequant_fa2": false,
+    "output": "runs/paper/fig2_throughput/raw_fused/fused_v3_N128K.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [],
+  "CDA": [],
+  "DEQUANT_FA2": [],
+  "FUSED_DEQUANT_FA2": [
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 1,
+      "prompt_len": 126976,
+      "decode_len": 4096,
+      "n_completed": 1,
+      "total_wall_s": 300.391095161438,
+      "total_tokens": 131072,
+      "throughput_tok_s": 436.3378346137674,
+      "wall_s": 348.2228624820709,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 2,
+      "prompt_len": 126976,
+      "decode_len": 4096,
+      "n_completed": 2,
+      "total_wall_s": 507.50544238090515,
+      "total_tokens": 262144,
+      "throughput_tok_s": 516.5343622133009,
+      "wall_s": 555.0537710189819,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 3,
+      "prompt_len": 126976,
+      "decode_len": 4096,
+      "n_completed": 3,
+      "total_wall_s": 716.9991371631622,
+      "total_tokens": 393216,
+      "throughput_tok_s": 548.4190700086139,
+      "wall_s": 761.7216591835022,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 4,
+      "prompt_len": 126976,
+      "decode_len": 4096,
+      "n_completed": 4,
+      "total_wall_s": 928.4487731456757,
+      "total_tokens": 524288,
+      "throughput_tok_s": 564.6924366367148,
+      "wall_s": 971.5720105171204,
+      "status": "ok"
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 0,
+    "cda_max_batch_ok": 0,
+    "dequant_fa2_max_batch_ok": 0,
+    "capacity_multiplier_cda": null,
+    "capacity_multiplier_dequant": null
+  }
+}

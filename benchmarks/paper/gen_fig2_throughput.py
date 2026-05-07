@@ -1,28 +1,29 @@
 """Figure 2 — Serving throughput vs concurrent requests for CDA paper.
 
 Reads cap_sweep_N*.json artifacts and plots throughput (tok/s) vs batch B
-for FA2 vs CDA, marking OOM cliffs.
+for FA2, dequant+FA2 (Class (a)), and CDA (Class (d)).
 
-Usage:
-    python papers/gen_fig2_throughput.py \\
-        runs/paper/cap_sweep_N128K_v3.json \\
-        runs/paper/cap_sweep_N64K_v3.json \\
-        runs/paper/cap_sweep_N16K_v2.json \\
-        runs/paper/cap_sweep_N8K_v3.json \\
+Usage (consolidated layout — see runs/paper/fig2_throughput/README.md):
+    python benchmarks/paper/gen_fig2_throughput.py \\
+        runs/paper/fig2_throughput/raw/4K/*.json \\
+        runs/paper/fig2_throughput/raw/16K/*.json \\
+        runs/paper/fig2_throughput/raw/64K/*.json \\
+        runs/paper/fig2_throughput/raw/128K/*.json \\
         --output papers/69cf3c869b7b5e6e5a202759/neurips/figures/fig2_throughput.pdf
 """
 from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib.lines import Line2D
+
+from plot_colors import METHOD_COLORS
 
 
 def _N_label(n: int) -> str:
@@ -33,15 +34,20 @@ def _N_label(n: int) -> str:
     return str(n)
 
 
+_BACKENDS = ("FA2", "CDA", "DEQUANT_FA2", "FUSED_DEQUANT_FA2")
+
+
 def _consolidate_per_N(paths: list[str]) -> dict[int, dict]:
-    """Merge multiple sweep files per prompt_len, picking the best (latest) value for each batch."""
+    """Merge multiple sweep files per total context length (prompt+decode), picking the best (latest) value for each batch."""
     by_N: dict[int, dict] = {}
     for path in paths:
         d = json.loads(Path(path).read_text())
-        N = d["config"]["prompt_len"]
+        # N = total context length (prompt + decode), matching paper convention
+        # Nctx in {4, 16, 64, 128}K
+        N = d["config"]["prompt_len"] + d["config"]["decode_len"]
         if N not in by_N:
-            by_N[N] = {"FA2": {}, "CDA": {}}
-        for backend in ("FA2", "CDA"):
+            by_N[N] = {b: {} for b in _BACKENDS}
+        for backend in _BACKENDS:
             for r in d.get(backend, []):
                 if r.get("status") != "ok":
                     continue
@@ -64,9 +70,16 @@ def main():
     args = ap.parse_args()
 
     plt.rcParams.update({
-        "font.size": 12,
-        "font.family": "sans-serif",
+        "font.family": "serif",
+        "font.size": 13,
+        "axes.labelsize": 14,
+        "axes.titlesize": 14,
+        "legend.fontsize": 12,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
         "figure.dpi": 200,
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
     })
 
     by_N = _consolidate_per_N(args.artifacts)
@@ -78,34 +91,30 @@ def main():
     if n_panels == 1:
         axes = [axes]
 
-    for ax, N in zip(axes, sorted_N):
-        fa2_data = by_N[N]["FA2"]
-        cda_data = by_N[N]["CDA"]
-        fa2_b = sorted(fa2_data.keys())
-        fa2_tps = [fa2_data[b]["throughput_tok_s"] for b in fa2_b]
-        cda_b = sorted(cda_data.keys())
-        cda_tps = [cda_data[b]["throughput_tok_s"] for b in cda_b]
-        fa2_oom_at = None  # consolidate keeps only oks
-        cda_oom_at = None
+    backend_style = {
+        "FA2":               ("o", "-",  METHOD_COLORS["FA2"], "FA2 (FP16 KV)"),
+        "FUSED_DEQUANT_FA2": ("D", "--", METHOD_COLORS["DEQUANT_FA2"],
+                              "dequant+FA2 (K4V4 → FP16, Class (a))"),
+        "CDA":               ("s", "-",  METHOD_COLORS["CDA"], "CDA (K4V4, Class (d))"),
+    }
 
-        if fa2_b:
-            ax.plot(fa2_b, fa2_tps, "o-", color="#3B7DD8", lw=2,
-                     label="FA2 (FP16 KV)")
-            if fa2_oom_at is not None:
-                ax.axvline(fa2_oom_at, color="#3B7DD8", lw=1.2, ls="--",
-                            alpha=0.7)
-                ax.text(fa2_oom_at, ax.get_ylim()[1] * 0.95,
-                        f"FA2 OOM\nB={fa2_oom_at}", color="#3B7DD8",
-                        ha="left", va="top", fontsize=9)
-        if cda_b:
-            ax.plot(cda_b, cda_tps, "s-", color="#D62728", lw=2,
-                     label="CDA (K4V4)")
-            if cda_oom_at is not None:
-                ax.axvline(cda_oom_at, color="#D62728", lw=1.2, ls="--",
-                            alpha=0.7)
-                ax.text(cda_oom_at, ax.get_ylim()[1] * 0.85,
-                        f"CDA OOM\nB={cda_oom_at}", color="#D62728",
-                        ha="left", va="top", fontsize=9)
+    for ax, N in zip(axes, sorted_N):
+        for backend, (mk, ls, color, label) in backend_style.items():
+            data = by_N[N].get(backend, {})
+            if not data:
+                continue
+            bs = sorted(data.keys())
+            # Decode-only throughput: (B * decode_len) / total_wall_s.
+            # Matches Table A3 convention (excludes prefill tokens) so
+            # paper text and figure cite identical numbers per cell.
+            tps = []
+            for b in bs:
+                r = data[b]
+                D = r["decode_len"]
+                wall = r["total_wall_s"]
+                tps.append((b * D) / wall)
+            ax.plot(bs, tps, marker=mk, linestyle=ls, color=color, lw=2,
+                    label=label)
 
         ax.set_xlabel("Concurrent requests $B$")
         ax.set_xscale("log", base=2)
@@ -113,13 +122,21 @@ def main():
             ax.set_ylim(bottom=0)
         ax.set_title(f"$N = {_N_label(N)}$")
         ax.grid(True, alpha=0.3)
-        ax.legend(loc="best", fontsize=10, framealpha=0.95)
 
-    axes[0].set_ylabel("Throughput (tokens/s)")
+    axes[0].set_ylabel("Decode-only throughput (tokens/s)")
 
-    fig.suptitle(f"Serving throughput vs concurrent requests — {args.model}",
-                  fontsize=13, y=1.02)
-    fig.tight_layout()
+    legend_handles = [
+        Line2D([0], [0], marker=mk, linestyle=ls, color=color, lw=2,
+               markersize=6, label=label)
+        for mk, ls, color, label in backend_style.values()
+    ]
+    fig.legend(handles=legend_handles, loc="upper center",
+               bbox_to_anchor=(0.5, 1.0), ncol=len(legend_handles),
+               frameon=False, handlelength=2.4, columnspacing=1.2)
+
+    # fig.suptitle(f"Serving throughput vs concurrent requests — {args.model}",
+    #               fontsize=13, y=1.02)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, bbox_inches="tight")

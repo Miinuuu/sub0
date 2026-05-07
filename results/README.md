@@ -7,7 +7,7 @@ Every numeric Table/Figure in the paper has a backing JSON/log under
 
 ```
 runs/paper/
-├── table2_compute_path_iso/        # Table 2 — kernel decode latency CDA vs dequant+FA2
+├── table2_compute_path_iso/        # Table 2 — kernel decode latency: CDA vs FA2 / dequant+FA2 (R2) / fused dequant+FA2 (R1)
 │   └── compute_path_isolation_cuda_graph.json
 ├── table3_cross_baseline/          # Table 3 — cross-baseline kernel μs (fill-in cells)
 │   └── cross_baseline_table3_refill.json
@@ -38,10 +38,10 @@ runs/paper/
 
 | Paper artifact | Reported number | File | Cell / key |
 |---|---|---|---|
-| Table 2 (B=1, N=4K)   | dequant=0.100ms / CDA=0.042ms / ratio=0.42×  | `table2_compute_path_iso/compute_path_isolation_cuda_graph.json` | results[0] |
-| Table 2 (B=1, N=64K)  | dequant=1.360ms / CDA=0.290ms / ratio=0.21×  | same | results[1] |
-| Table 2 (B=4, N=64K)  | dequant=5.554ms / CDA=0.984ms / ratio=0.18×  | same | results[2] |
-| Table 2 (B=32, N=16K) | dequant=11.630ms / CDA=1.871ms / ratio=0.16× | same | results[3] |
+| Table 2 (B=1, N=4K)   | FA2=0.043ms / CDA=0.053ms / dequant(R2)=0.114ms / fused(R1)=0.170ms  | `table2_compute_path_iso/compute_path_isolation_cuda_graph.json` | results[0] |
+| Table 2 (B=1, N=64K)  | FA2=0.406ms / CDA=0.297ms / dequant(R2)=1.329ms / fused(R1)=1.769ms  | same | results[1] |
+| Table 2 (B=4, N=64K)  | CDA=0.986ms / dequant(R2)=5.487ms / fused(R1)=6.533ms  | same | results[2] |
+| Table 2 (B=32, N=16K) | CDA=1.937ms / dequant(R2)=11.853ms / fused(R1)=10.402ms | same | results[3] |
 | Table 3 PolarQuant B=4,N=64K  | 9{,}336 us  | `table3_cross_baseline/cross_baseline_table3_refill.json` | results[0] |
 | Table 3 PolarQuant B=32,N=16K | 18{,}656 us | same | results[1] |
 | Table 3 CommVQ B=4,N=64K      | 92{,}080 us | same | results[2] |
@@ -55,7 +55,7 @@ runs/paper/
 | Table 5 8K Macro/NIAH  | FA2 0.945/0.998 ; CDA 0.937/0.993 | `table5_ruler/8k/{fa2,cda}/results_*.json` | results.<task>."8192,none" |
 | Table 5 16K Macro/NIAH | FA2 0.932/0.995 ; CDA 0.923/0.992 | `table5_ruler/16k/...`  | results.<task>."16384,none" |
 | Table 5 32K Macro/NIAH | FA2 0.864/0.993 ; CDA 0.854/0.987 | `table5_ruler/32k/...`  | results.<task>."32768,none" |
-| Fig 2 / Table A3 (out_tps) | per cell tok/s | `tableA3_fig2_throughput/{4K,16K,64K,128K}/*.json` | out_tps = batch * decode_len / wall_s |
+| Fig 2 / Table A3 (out_tps) | per cell tok/s for FA2/CDA + Class (a) `DEQUANT_FA2`/`FUSED_DEQUANT_FA2` baselines | `tableA3_fig2_throughput/{4K,16K,64K,128K}/*.json` (fused R1 sweeps in `cap_sweep_fused_dequant_fa2_v3__N*.json`) | out_tps = batch * decode_len / wall_s |
 | Table A4 70B TP=4      | per (N,B,backend) tok/s | `tableA4_tp4_70b/N{16K,64K}_b*_{cda,fa2}*.json` | throughput_tok_s |
 | Table A5 rotation      | identity 9.34 / hadamard 7.33 / random_orth 7.18±0.08 | `tableA5_rotation_ablation/abl_rotation_multiseed.json` | identity, hadamard, random_orthogonal_seeds |
 

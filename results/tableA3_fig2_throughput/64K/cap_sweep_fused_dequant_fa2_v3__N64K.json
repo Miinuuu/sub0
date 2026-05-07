@@ -1,0 +1,129 @@
+{
+  "config": {
+    "batches": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8
+    ],
+    "prompt_len": 61440,
+    "decode_len": 4096,
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "max_model_len": 65536,
+    "gpu_mem_util": 0.85,
+    "gpu": "2",
+    "tp": 1,
+    "eager": false,
+    "no_cda_memory_saving": false,
+    "skip_fa2": true,
+    "skip_cda": true,
+    "skip_dequant_fa2": true,
+    "skip_fused_dequant_fa2": false,
+    "only_fused_dequant_fa2": false,
+    "output": "runs/paper/fig2_throughput/raw_fused/fused_v3_N64K.json",
+    "worker": false,
+    "backend": null,
+    "batch": null,
+    "out_tmp": null,
+    "memory_saving": false
+  },
+  "FA2": [],
+  "CDA": [],
+  "DEQUANT_FA2": [],
+  "FUSED_DEQUANT_FA2": [
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 1,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 1,
+      "total_wall_s": 186.29212760925293,
+      "total_tokens": 65536,
+      "throughput_tok_s": 351.791569729997,
+      "wall_s": 233.2357497215271,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 2,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 2,
+      "total_wall_s": 278.4970989227295,
+      "total_tokens": 131072,
+      "throughput_tok_s": 470.64045014115794,
+      "wall_s": 322.0222144126892,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 3,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 3,
+      "total_wall_s": 369.6421494483948,
+      "total_tokens": 196608,
+      "throughput_tok_s": 531.8873951290237,
+      "wall_s": 415.68514108657837,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 4,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 4,
+      "total_wall_s": 461.48301815986633,
+      "total_tokens": 262144,
+      "throughput_tok_s": 568.0469046191174,
+      "wall_s": 506.3731060028076,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 5,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 5,
+      "total_wall_s": 552.8517541885376,
+      "total_tokens": 327680,
+      "throughput_tok_s": 592.7086194760489,
+      "wall_s": 599.8144226074219,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 6,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 6,
+      "total_wall_s": 644.9367125034332,
+      "total_tokens": 393216,
+      "throughput_tok_s": 609.6970328664718,
+      "wall_s": 688.8535630702972,
+      "status": "ok"
+    },
+    {
+      "backend": "FUSED_DEQUANT_FA2",
+      "batch": 8,
+      "prompt_len": 61440,
+      "decode_len": 4096,
+      "n_completed": 8,
+      "total_wall_s": 828.4094626903534,
+      "total_tokens": 524288,
+      "throughput_tok_s": 632.8850931969264,
+      "wall_s": 872.7512464523315,
+      "status": "ok"
+    }
+  ],
+  "summary": {
+    "fa2_max_batch_ok": 0,
+    "cda_max_batch_ok": 0,
+    "dequant_fa2_max_batch_ok": 0,
+    "capacity_multiplier_cda": null,
+    "capacity_multiplier_dequant": null
+  }
+}

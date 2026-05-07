@@ -7,37 +7,50 @@
     "iters": 20,
     "device": "NVIDIA RTX A6000",
     "torch_version": "2.10.0+cu128",
-    "timestamp": "2026-05-04T17:58",
-    "model_shape": "H_kv=8, group=4, head_dim=128, block_size=16"
+    "timestamp": "2026-05-07T12:03",
+    "model_shape": "H_kv=8, group=4, head_dim=128, block_size=16",
+    "notes": "Adds Class (a) baselines: FA2 (FP16, no quantization), R2 dequant+FA2 (separate-kernel staging), and R1 fused dequant+FA2 (in-kernel SMEM-tile dequant)."
   },
   "results": [
     {
       "B": 1,
       "N": 4096,
-      "CDA_us": 41.98399931192398,
-      "dequant_FA2_us": 100.35199671983719,
-      "ratio_CDA_vs_dequantFA2": 0.418367353757145
+      "FA2_us": 43.007999658584595,
+      "CDA_us": 53.13599854707718,
+      "dequant_FA2_us": 113.66400122642517,
+      "fused_dequant_FA2_us": 169.98399794101715,
+      "ratio_CDA_vs_FA2": 1.235491047453796,
+      "ratio_CDA_vs_dequantFA2": 0.46748309028139207,
+      "ratio_CDA_vs_fused_dequantFA2": 0.31259412174500606
     },
     {
       "B": 1,
       "N": 65536,
-      "CDA_us": 289.72800076007843,
-      "dequant_FA2_us": 1360.368013381958,
-      "ratio_CDA_vs_dequantFA2": 0.21297766333081952
+      "FA2_us": 405.5039882659912,
+      "CDA_us": 296.9599962234497,
+      "dequant_FA2_us": 1329.15198802948,
+      "fused_dequant_FA2_us": 1769.4720029830933,
+      "ratio_CDA_vs_FA2": 0.7323232442011351,
+      "ratio_CDA_vs_dequantFA2": 0.2234206463202937,
+      "ratio_CDA_vs_fused_dequantFA2": 0.16782407165686422
     },
     {
       "B": 4,
       "N": 65536,
-      "CDA_us": 984.4479858875275,
-      "dequant_FA2_us": 5553.6158084869385,
-      "ratio_CDA_vs_dequantFA2": 0.1772625294646978
+      "CDA_us": 986.1,
+      "dequant_FA2_us": 5487.1,
+      "fused_dequant_FA2_us": 6532.9,
+      "ratio_CDA_vs_dequantFA2": 0.17971,
+      "ratio_CDA_vs_fused_dequantFA2": 0.15094
     },
     {
       "B": 32,
       "N": 16384,
-      "CDA_us": 1871.359944343567,
-      "dequant_FA2_us": 11630.079746246338,
-      "ratio_CDA_vs_dequantFA2": 0.16090688844567527
+      "CDA_us": 1936.9,
+      "dequant_FA2_us": 11852.8,
+      "fused_dequant_FA2_us": 10401.8,
+      "ratio_CDA_vs_dequantFA2": 0.16341,
+      "ratio_CDA_vs_fused_dequantFA2": 0.18621
     }
   ]
 }

@@ -74,6 +74,7 @@ def main():
     from cda.algorithm.compression import Compressor
     from cda.kernels_vllm_fa2_fork import (
         dequantize_compressed_kv,
+        flash_attn_varlen_compressed_kv_fused_func,
         flash_attn_varlen_func,
     )
     from cda.kernels_cuda.wrappers import decode_hmma_v1
@@ -154,6 +155,36 @@ def main():
         cda_us = _time_graph(cda_graph, iters=iters)
 
         # ============================================================
+        # FA2 path: pure FP16 cache via standard FA2 (no quantization)
+        # ============================================================
+        K_flat_full = k.permute(0, 2, 1, 3).reshape(B * N, H_kv, D).contiguous()
+        V_flat_full = v.permute(0, 2, 1, 3).reshape(B * N, H_kv, D).contiguous()
+        cu_q_raw = (
+            torch.arange(0, B + 1, dtype=torch.int32, device=device) * M_q
+        )
+        cu_k_raw = (
+            torch.arange(0, B + 1, dtype=torch.int32, device=device) * N
+        )
+        q_raw_var = (
+            q.permute(0, 2, 1, 3).reshape(B * M_q, H_q, D).contiguous()
+        )
+
+        def call_fa2():
+            return flash_attn_varlen_func(
+                q_raw_var,
+                K_flat_full,
+                V_flat_full,
+                cu_seqlens_q=cu_q_raw,
+                cu_seqlens_k=cu_k_raw,
+                max_seqlen_q=M_q,
+                max_seqlen_k=N,
+                softmax_scale=scale,
+            )
+
+        fa2_graph = _capture(call_fa2, warmup=warmup)
+        fa2_us = _time_graph(fa2_graph, iters=iters)
+
+        # ============================================================
         # dequant+FA2 path: two kernels (dequant + FA2) captured together
         # ============================================================
         cu_q = (
@@ -199,23 +230,53 @@ def main():
         path_graph = _capture(call_path, warmup=warmup)
         dequant_fa2_us = _time_graph(path_graph, iters=iters)
 
+        # ============================================================
+        # FUSED dequant+FA2 path: single fused kernel (R1 in-kernel SMEM-tile dequant)
+        # ============================================================
+        def call_fused_path():
+            return flash_attn_varlen_compressed_kv_fused_func(
+                q_var,
+                k_slot.idx,
+                k_slot.norm,
+                v_slot.idx,
+                v_slot.norm,
+                cmp_k.codebook,
+                cmp_v.codebook,
+                max_seqlen_q=M_q,
+                cu_seqlens_q=cu_q,
+                max_seqlen_k=N,
+                cu_seqlens_k=cu_k,
+                softmax_scale=scale,
+            )
+
+        fused_graph = _capture(call_fused_path, warmup=warmup)
+        fused_dequant_fa2_us = _time_graph(fused_graph, iters=iters)
+
         ratio = cda_us / dequant_fa2_us
+        ratio_fused = cda_us / fused_dequant_fa2_us
+        ratio_fa2 = cda_us / fa2_us
         results.append(
             {
                 "B": B,
                 "N": N,
+                "FA2_us": fa2_us,
                 "CDA_us": cda_us,
                 "dequant_FA2_us": dequant_fa2_us,
+                "fused_dequant_FA2_us": fused_dequant_fa2_us,
+                "ratio_CDA_vs_FA2": ratio_fa2,
                 "ratio_CDA_vs_dequantFA2": ratio,
+                "ratio_CDA_vs_fused_dequantFA2": ratio_fused,
             }
         )
         print(
-            f"B={B}, N={N}: CDA={cda_us:.1f} us, dequant+FA2={dequant_fa2_us:.1f} us, "
-            f"ratio={ratio:.3f}",
+            f"B={B}, N={N}: FA2={fa2_us:.1f} us, CDA={cda_us:.1f} us, "
+            f"dequant+FA2={dequant_fa2_us:.1f} us, fused={fused_dequant_fa2_us:.1f} us, "
+            f"r_FA2={ratio_fa2:.3f}, r_deq={ratio:.3f}, r_fused={ratio_fused:.3f}",
             flush=True,
         )
 
-    out_path = Path("runs/paper/compute_path_isolation_cuda_graph.json")
+    out_name = os.environ.get("OUT_NAME", "compute_path_isolation_cuda_graph")
+    out_path = Path(f"runs/paper/{out_name}.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
         json.dumps(
